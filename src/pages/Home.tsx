@@ -3,7 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useStore } from '../store';
 import { Av, AvStack, GroupPic, I, Sheet } from '../components/ui';
 import { playBuzz } from '../components/fx';
-import { activePlan, attendees, goalTxt, lastLabel, nextPlan, notifications, overdue, pointsOf, type Notif } from '../lib/derive';
+import { activePlan, attendees, effDone, goalTxt, lastLabel, nextPlan, notifications, overdue, pointsOf, type Notif } from '../lib/derive';
 import { LEVELS, levelOf } from '../lib/logic/points';
 import { planSentence, planTitle } from '../lib/logic/plan';
 import { cap, daysBetween, parseISO, today } from '../lib/logic/dates';
@@ -67,7 +67,7 @@ export default function Home({ onPropose }: { onPropose: (groupId?: string) => v
           <button key={p.id} className="card tight" style={{ textAlign: 'left' }} onClick={() => nav(`/p/${p.id}`)}>
             <div className="row between"><span className="eyebrow">{g.name}</span><span className="chip warn">En votación</span></div>
             <h3>{planTitle(p.answers, true)}</h3>
-            <p className="small muted">Respondieron {p.done[p.round || 'cuando'].length} de {attendees(g, p).length}</p>
+            <p className="small muted">Respondieron {effDone(p, p.round || 'cuando').length} de {attendees(g, p).length}</p>
           </button>); })}
       </section>
 

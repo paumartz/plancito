@@ -1,7 +1,7 @@
 // @ts-nocheck — dibujo del avatar portado tal cual del prototipo (prototype/index.html)
 export interface AvatarOpts { pelo: string; colorPelo: string; cara: string; lentes: string; acc: string; mascota?: string; color: string }
 export const AV_OPTS = {
-  pelo:[['melena','Melena'],['rulos','Rulos'],['corto','Corto'],['rodetes','Rodetes'],['afro','Afro'],['largo','Largo'],['pelado','Pelado']],
+  pelo:[['melena','Melena'],['rulos','Rulos'],['rulosLargos','Rulos largos'],['corto','Corto'],['rodetes','Rodetes'],['afro','Afro'],['largo','Largo'],['pelado','Pelado']],
   colorPelo:[['ink','Negro'],['castano','Castaño'],['rubio','Rubio'],['linea','Solo línea']],
   cara:[['feliz','Feliz'],['sonrisa','Sonrisa'],['guino','Guiño'],['sorpresa','Sorpresa'],['meh','Meh'],['dormido','Fiaca']],
   lentes:[['no','Sin lentes'],['redondos','Redondos'],['cuadrados','Cuadrados'],['sol','De sol']],
@@ -36,6 +36,10 @@ export function avatar(a, size=48, o={}){
     case 'corto': front = short; break;
     case 'rodetes': back = `<circle cx="33" cy="27" r="7" ${hs}/><circle cx="67" cy="27" r="7" ${hs}/>`; front = short; break;
     case 'afro': back = `<path d="M25 54 C16 46 19 31 28 28 C28 17 42 12 50 16 C58 11 72 16 72 27 C82 30 85 46 75 54 Z" ${hs}/>`; break;
+    case 'rulosLargos':
+      back = [[29,42],[26,52],[26,62],[28,72],[33,80],[38,86],[71,42],[74,52],[74,62],[72,72],[67,80],[62,86],[34,31],[66,31],[50,23],[42,25],[58,25]].map(([x,y]) => `<circle cx="${x}" cy="${y}" r="7.6" ${hs}/>`).join('')
+        + [[27,57],[73,57],[30,76],[70,76]].map(([x,y]) => `<path d="M${x-2} ${y} a2.4 2.4 0 1 1 3.2 1.6" ${L} stroke-width="1.4"/>`).join('');
+      front = [[35,35],[41,28],[50,25],[59,28],[65,35],[45,32],[55,32]].map(([x,y]) => `<circle cx="${x}" cy="${y}" r="6" ${hs}/><path d="M${x-2} ${y} a2.2 2.2 0 1 1 3 1.4" ${L} stroke-width="1.4"/>`).join(''); break;
     case 'rulos': front = [[33,36],[38,28],[46,24],[55,24],[63,28],[68,36],[42,33],[51,31],[59,33]].map(([x,y]) => `<circle cx="${x}" cy="${y}" r="6.2" ${hs}/><path d="M${x-2} ${y} a2.2 2.2 0 1 1 3 1.4" ${L} stroke-width="1.4"/>`).join(''); break;
     case 'pelado': front = `<path d="M46 29 q2 -4 4 0 M50 28 q2 -4 4 0" ${L} stroke-width="1.7"/>`; break;
   }

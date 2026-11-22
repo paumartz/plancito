@@ -2,10 +2,20 @@
 import type { Group, Plan, PointEntry, Profile, Regalito } from '../data';
 import { daysToBirthday, majority, shareOf } from './logic/regalito';
 import { daysBetween, iso, parseISO, today, upcomingDays } from './logic/dates';
-import { planTitle } from './logic/plan';
+import { emptyBallot, planTitle, slotId, type Ballots } from './logic/plan';
 import { debtKey, settle } from './logic/split';
 import { levelOf } from './logic/points';
 
+/** Lo que ya propuso quien armó el plancito cuenta como su voto: no tiene que votar lo que propuso. */
+const covers = (p: Plan, round: 'cuando' | 'donde') => round === 'cuando' ? !!(p.proposed?.dia && p.proposed?.momento) : !!p.proposed?.plan;
+export function effBallots(p: Plan, round: 'cuando' | 'donde'): Ballots {
+  const b: Ballots = { ...p.ballots[round] };
+  if (covers(p, round) && !b[p.createdBy]) b[p.createdBy] = round === 'cuando' ? { slots: [slotId(p.proposed.dia!, p.proposed.momento!)] } : { ...emptyBallot('donde'), plan: [p.proposed.plan!] };
+  return b;
+}
+export function effDone(p: Plan, round: 'cuando' | 'donde'): string[] {
+  return covers(p, round) && !p.done[round].includes(p.createdBy) ? [...p.done[round], p.createdBy] : p.done[round];
+}
 export const attendees = (g: Group, p: Plan) => { const out = new Set(p.out.map((o) => o.who)); return g.members.filter((m) => !out.has(m)); };
 export const planDays = (p: Plan) => upcomingDays(parseISO(p.createdAt.slice(0, 10)));
 export const goalTxt = (g: Group) => `${g.goal.n} ${g.goal.n === 1 ? 'vez' : 'veces'} por ${g.goal.per}`;
@@ -55,7 +65,7 @@ export function notifications(o: { me: string; groups: Group[]; plans: Plan[]; r
         out.push({ pr: 0, tone: 'var(--pink)', who: d.to, title: `Le debés $${d.amount.toLocaleString('es-AR')} a ${nick(d.to)}`, sub: `${planTitle(p.answers)} · ${g.name}`, cta: 'Pagar', to: `/p/${p.id}` });
     }
     const ap = activePlan(g, plans);
-    if (ap && ap.round && attendees(g, ap).includes(me) && !ap.done[ap.round].includes(me))
+    if (ap && ap.round && attendees(g, ap).includes(me) && !effDone(ap, ap.round).includes(me))
       out.push({ pr: 1, tone: 'var(--peach)', who: ap.createdBy, title: `Te falta votar en ${g.name}`, sub: `${ap.round === 'cuando' ? '¿Cuándo podés?' : '¿Qué hacemos?'} · te lleva un minuto`, cta: 'Votar', to: `/p/${ap.id}` });
     const np = nextPlan(g, plans);
     if (np) {

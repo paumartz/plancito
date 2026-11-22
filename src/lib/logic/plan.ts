@@ -170,10 +170,12 @@ export function gcalUrl(a: Answers, groupName: string, link: string) {
     + `&dates=${f(st)}/${f(en)}&ctz=America/Argentina/Buenos_Aires&details=` + encodeURIComponent(planSentence(a) + '\n' + link)
     + '&location=' + encodeURIComponent(planWhere(a));
 }
-export function shareText(p: Proposed, link: string, days: { id: string; phrase: string }[]) {
+/** Mensaje para mandar por WhatsApp. "others" = a cuántas personas va (1 = una sola, sin plural). */
+export function shareText(p: Proposed, link: string, days: { id: string; phrase: string }[], others = 2) {
   const mo = p.momento && MOM(p.momento), pl = p.plan && PLANES[p.plan], d = p.dia && days.find((x) => x.id === p.dia);
-  const que = pl ? pl.l.toLowerCase() : 'algo';
-  if (mo && d) return `Che, ¿hacemos un plancito? Propongo ${que} ${d.phrase} ${mo.en}. Si les sirve es un toque: ${link}`;
-  if (mo) return `Che, ¿hacemos ${que} ${mo.en}? Marquen qué días pueden acá: ${link}`;
-  return `Che, ¿hacemos un plancito? Marquen cuándo pueden acá: ${link}`;
+  const que = pl ? pl.l.toLowerCase() : 'algo', one = others === 1;
+  if (mo && d) return one ? `¿Hacemos un plancito? Te propongo ${que} ${d.phrase} ${mo.en}. Si te sirve, es un toque: ${link}`
+    : `Che, ¿hacemos un plancito? Propongo ${que} ${d.phrase} ${mo.en}. Si les sirve, es un toque: ${link}`;
+  if (mo) return one ? `¿Hacemos ${que} ${mo.en}? Marcá qué días podés acá: ${link}` : `Che, ¿hacemos ${que} ${mo.en}? Marquen qué días pueden acá: ${link}`;
+  return one ? `¿Hacemos un plancito? Marcá cuándo podés acá: ${link}` : `Che, ¿hacemos un plancito? Marquen cuándo pueden acá: ${link}`;
 }

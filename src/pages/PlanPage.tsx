@@ -4,7 +4,7 @@ import { api, type Group, type Plan } from '../data';
 import { useStore } from '../store';
 import { Av, AvStack, I, Sheet, TopBar, copyText, shareText } from '../components/ui';
 import { celebrate, starBurst } from '../components/fx';
-import { attendees, planDays } from '../lib/derive';
+import { attendees, effBallots, effDone, planDays } from '../lib/derive';
 import {
   COCINA, LUGARES, MOM, MOMENTOS, PLANES, closeCuando, closeDonde, emptyBallot, gcalUrl, leadPlan, lugaresFor, menusFor,
   planSentence, planTitle, planesFor, slotId, votersFor, type Ballot, type BallotDonde,
@@ -35,9 +35,11 @@ function PlanView({ p, g }: { p: Plan; g: Group }) {
 
   // Mi voto en borrador: se guarda en cada toque.
   const round = p.round || 'cuando';
-  const mine: Ballot = { ...emptyBallot(round), ...(p.ballots[round][me] || {}) };
-  const ballots = { ...p.ballots[round], [me]: mine };
-  const iDone = p.done[round].includes(me);
+  const eb = effBallots(p, round), ed = effDone(p, round);
+  const mine: Ballot = { ...emptyBallot(round), ...(eb[me] || {}) };
+  const ballots = { ...eb, [me]: mine };
+  const iDone = ed.includes(me);
+  const iProposed = me === p.createdBy && (round === 'cuando' ? !!(p.proposed.dia && p.proposed.momento) : !!p.proposed.plan);
 
   async function save(next: Ballot, done = iDone) {
     try { await api.saveBallot(p.id, round, next, done); await reload(); } catch (e) { toast('No se pudo guardar: ' + (e as Error).message); }
@@ -51,11 +53,11 @@ function PlanView({ p, g }: { p: Plan; g: Group }) {
     if (closing.current) return; closing.current = true;
     try {
       if (p.round === 'cuando') {
-        const a = { ...p.answers, ...closeCuando(p.ballots.cuando, planDays(p)) };
+        const a = { ...p.answers, ...closeCuando(effBallots(p, 'cuando'), planDays(p)) };
         await api.updatePlan(p.id, { answers: a, round: 'donde' });
         toast(`Quedó ${a.dia!.label} · ${a.momento!.label}. Ahora, qué hacemos.`);
       } else if (p.round === 'donde') {
-        const a = closeDonde({ likes: g.likes, spots: g.spots, answers: p.answers, ballots: p.ballots.donde, proposed: p.proposed, nick });
+        const a = closeDonde({ likes: g.likes, spots: g.spots, answers: p.answers, ballots: effBallots(p, 'donde'), proposed: p.proposed, nick });
         await api.updatePlan(p.id, { answers: a, status: 'definido', round: null, date: a.dia!.date });
         celebrate({ title: `Plancito definido · ${g.name}`, when: `${a.dia!.label} · ${a.hora!.label}`, sentence: planSentence(a),
           avatars: att.map((x) => st.profiles[x]?.avatar).filter(Boolean), gcal: gcalUrl(a, g.name, link) });
@@ -66,7 +68,7 @@ function PlanView({ p, g }: { p: Plan; g: Group }) {
   }
 
   // Si ya respondieron todos, la ronda se cierra sola.
-  const allDone = p.status === 'votando' && p.round && att.length > 0 && att.every((x) => p.done[p.round!].includes(x));
+  const allDone = p.status === 'votando' && p.round && att.length > 0 && att.every((x) => effDone(p, p.round!).includes(x));
   useEffect(() => { if (allDone) closeRound(); }, [allDone]); // eslint-disable-line react-hooks/exhaustive-deps
 
   return <>
@@ -78,13 +80,13 @@ function PlanView({ p, g }: { p: Plan; g: Group }) {
   </>;
 
   function Footer() {
-    const done = att.filter((x) => p.done[round].includes(x)), missing = att.filter((x) => x !== me && !p.done[round].includes(x));
+    const done = att.filter((x) => ed.includes(x)), missing = att.filter((x) => x !== me && !ed.includes(x));
     return <>
       <div className="card tight"><div className="row between"><span className="small" style={{ fontWeight: 700 }}>Respondieron {done.length} de {att.length}</span><AvStack ids={done} size={24} /></div>
-        {missing.length > 0 && <p className="small muted">Falta: {missing.map(nick).join(', ')} · <button className="link small" onClick={() => shareText(`¡Falta tu voto para el plancito de ${g.name}! ${link}`, toast)}>Recordarles</button></p>}
+        {missing.length > 0 && <p className="small muted">Falta: {missing.map(nick).join(', ')} · <button className="link small" onClick={() => shareText(`¡Falta tu voto para el plancito${g.members.length === 2 ? '' : ` de ${g.name}`}! ${link}`, toast)}>{missing.length === 1 ? 'Recordarle' : 'Recordarles'}</button></p>}
         <p className="small muted">Se cierra sola cuando responden todos.</p></div>
       {!imOut && (iDone ? <>
-        <p className="small" style={{ textAlign: 'center', fontWeight: 700, color: 'var(--ok)' }}>Listo, ya está lo tuyo. Podés cambiarlo hasta que cierre.</p>
+        <p className="small" style={{ textAlign: 'center', fontWeight: 700, color: 'var(--ok)' }}>{iProposed ? 'Tu propuesta ya cuenta como tu voto. Si querés, sumá otras opciones.' : 'Listo, ya está lo tuyo. Podés cambiarlo hasta que cierre.'}</p>
         <button className="btn ghost full" onClick={closeRound}>Cerrar ahora con lo que hay</button>
       </> : <button className="btn tomato full" onClick={() => {
         if (round === 'cuando' && !(mine.slots || []).length) { toast('Marcá al menos un horario'); return; }
@@ -169,7 +171,7 @@ function PlanView({ p, g }: { p: Plan; g: Group }) {
           <div className="row wrap" style={{ gap: 7 }}>{([['3d', '3 días antes'], ['1d', 'El día anterior'], ['0d', 'El mismo día']] as const).map(([k, l]) => { const on = p.reminders.includes(k);
             return <button key={k} className={on ? 'vchip on' : 'vchip'} onClick={() => api.updatePlan(p.id, { reminders: on ? p.reminders.filter((x) => x !== k) : [...p.reminders, k] }).then(reload)}>{on ? '✓ ' : ''}{l}</button>; })}</div></div>
         <div className="stack">
-          <button className="btn full" onClick={() => shareText(`¡Quedó el plancito! ${planSentence(a)} ${link}`, toast)}>Mandar al grupo de WhatsApp</button>
+          <button className="btn full" onClick={() => shareText(`¡Quedó el plancito! ${planSentence(a)} ${link}`, toast)}>{g.members.length === 2 ? `Mandárselo a ${nick(g.members.find((m) => m !== me)!)}` : 'Mandar al grupo de WhatsApp'}</button>
           <button className="btn tomato full" onClick={() => setSheet('done')}>Se hizo: marcar como realizado</button>
           {imOut ? <button className="btn ghost full" onClick={() => api.rejoin(p.id).then(reload)}>Volver a sumarme</button> : <button className="btn ghost full" onClick={() => setSheet('out')}>Me bajo</button>}
         </div>
