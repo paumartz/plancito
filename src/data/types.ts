@@ -82,6 +82,7 @@ export interface Api {
   mode: 'local' | 'supabase';
   currentUserId(): Promise<string | null>;
   signIn(email: string): Promise<'sent' | 'signed-in'>;
+  verifyCode(email: string, code: string): Promise<void>;
   signOut(): Promise<void>;
   onAuthChange(cb: () => void): () => void;
 

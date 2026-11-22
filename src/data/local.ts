@@ -44,6 +44,7 @@ export const localApi: Api = {
     db.session = id; save();
     return 'signed-in';
   },
+  async verifyCode() { /* en modo local se entra sin código */ },
   async signOut() { db.session = null; save(); },
   onAuthChange(cb) { listeners.add(cb); return () => listeners.delete(cb); },
 

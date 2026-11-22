@@ -51,6 +51,9 @@ export function makeSupabaseApi(url: string, key: string): Api {
       must(await sb.auth.signInWithOtp({ email, options: { emailRedirectTo: window.location.href } }));
       return 'sent';
     },
+    async verifyCode(email, code) {
+      must(await sb.auth.verifyOtp({ email, token: code, type: 'email' }));
+    },
     async signOut() { await sb.auth.signOut(); },
     onAuthChange(cb) {
       const { data } = sb.auth.onAuthStateChange(() => cb());
