@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { enablePush, pushState, type PushState } from '../lib/push';
 import { markGuide } from '../components/ProfileGuide';
+import SwipeRow from '../components/SwipeRow';
 import { wishJoin, wishTitle, wishUrl } from '../lib/wish';
 import { useLocation } from 'react-router-dom';
 import { api, type Profile as P } from '../data';
@@ -48,16 +49,16 @@ export default function Profile() {
     <div className="hero-av"><span className="avb" style={{ width: 150, height: 150, borderWidth: 2 }} dangerouslySetInnerHTML={{ __html: avatar(me.avatar, 150) }} /></div>
 
     <section className="sec"><span className="eyebrow">Arrancá de un modelo</span>
-      <div className="row" style={{ overflowX: 'auto', gap: 8, paddingBottom: 4 }}>{TEMPLATES.map((t, i) =>
-        <button key={i} className="avb" style={{ width: 58, height: 58, padding: 0 }} aria-label={`Modelo ${i + 1}`} onClick={() => { markGuide(userId, 'avatar'); save({ avatar: { ...t } }); }} dangerouslySetInnerHTML={{ __html: avatar(t, 58) }} />)}</div>
+      <SwipeRow className="row tplrow">{TEMPLATES.map((t, i) =>
+        <button key={i} className="avb" style={{ width: 58, height: 58, padding: 0 }} aria-label={`Modelo ${i + 1}`} onClick={() => { markGuide(userId, 'avatar'); save({ avatar: { ...t } }); }} dangerouslySetInnerHTML={{ __html: avatar(t, 58) }} />)}</SwipeRow>
     </section>
     <section className="sec" id="avatar"><span className="eyebrow">Personalizalo</span>
       <div className="tabs">{AV_TABS.map(([k, l]: string[]) => <button key={k} className={`tab ${tab === k ? 'on' : ''}`} onClick={() => setTab(k)}>{l}</button>)}</div>
-      <div className="avpicker">{(AV_OPTS as Record<string, string[][]>)[tab].map(([v, l]) =>
+      <SwipeRow className="avpicker" resetKey={tab}>{(AV_OPTS as Record<string, string[][]>)[tab].map(([v, l]) =>
         <button key={v} className={(me.avatar as unknown as Record<string, string>)[tab] === v ? 'on' : ''} onClick={() => setAv(tab as keyof AvatarOpts, v)}>
           <Svg html={avatar({ ...me.avatar, [tab]: v }, 54)} />{l}</button>)}
         {tab === 'color' && <button className={me.avatar.color === 'custom' ? 'on' : ''} onClick={() => setCustom(true)}>
-          <Svg html={avatar({ ...me.avatar, color: 'custom', c1: me.avatar.c1 || '#7C8B4F', c2: me.avatar.c2 }, 54)} />Tu color</button>}</div>
+          <Svg html={avatar({ ...me.avatar, color: 'custom', c1: me.avatar.c1 || '#7C8B4F', c2: me.avatar.c2 }, 54)} />Tu color</button>}</SwipeRow>
       {tab === 'color' && custom && <CustomColor av={me.avatar} onSave={(c1, c2) => { markGuide(userId, 'avatar'); save({ avatar: { ...me.avatar, color: 'custom', c1, c2 } }); }} />}
     </section>
 
