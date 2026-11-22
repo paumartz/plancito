@@ -1,0 +1,9 @@
+[build]
+  command = "npm run build"
+  publish = "dist"
+
+# La app maneja sus rutas (por ejemplo /i/CODIGO para invitaciones)
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
