@@ -3,7 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useStore } from '../store';
 import { Av, AvStack, GroupPic, I, Sheet } from '../components/ui';
 import { playBuzz } from '../components/fx';
-import { activePlan, attendees, goalTxt, nextPlan, notifications, overdue, pointsOf, sinceLast, type Notif } from '../lib/derive';
+import { activePlan, attendees, goalTxt, lastLabel, nextPlan, notifications, overdue, pointsOf, type Notif } from '../lib/derive';
 import { LEVELS, levelOf } from '../lib/logic/points';
 import { planSentence, planTitle } from '../lib/logic/plan';
 import { cap, daysBetween, parseISO, today } from '../lib/logic/dates';
@@ -76,7 +76,7 @@ export default function Home({ onPropose }: { onPropose: (groupId?: string) => v
           const ap = activePlan(g, plans), np = nextPlan(g, plans), late = overdue(g, plans);
           return <button key={g.id} className="grow-row" onClick={() => nav(`/g/${g.id}`)}><GroupPic g={g} size={38} />
             <span className="grow"><b>{g.name}</b><br /><span className="small muted">{g.members.length} · {goalTxt(g)}</span></span>
-            {np ? <span className="chip ok">{np.answers.dia?.label}</span> : ap ? <span className="chip warn">Votando</span> : <span className={`chip ${late ? 'bad' : ''}`}>Hace {sinceLast(g, plans)} d</span>}
+            {np ? <span className="chip ok">{np.answers.dia?.label}</span> : ap ? <span className="chip warn">Votando</span> : <span className={`chip ${late ? 'bad' : ''}`}>{lastLabel(g, plans, true)}</span>}
           </button>; })}</div>
       </section>
     </>}

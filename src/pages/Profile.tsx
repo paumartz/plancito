@@ -47,7 +47,7 @@ export default function Profile() {
     <section className="sec"><h2>Tus datos</h2>
       <div className="grid2">{field('name', 'Nombre')}{field('nick', 'Apodo')}</div>
       <div className="grid2">{field('alias', 'Alias / CVU', 'tu.alias.mp')}{field('bank', 'Banco o billetera', 'Mercado Pago')}</div>
-      <div className="grid2">
+      <div className="stack">
         <div className="field"><label htmlFor="pfBday">Cumpleaños</label><input id="pfBday" type="date" className="inp" defaultValue={me.birthday || ''} onBlur={(e) => save({ birthday: e.target.value || null })} /></div>
         <div className="field"><label htmlFor="pfBarrio">Barrio</label><select id="pfBarrio" className="inp" value={me.barrio || ''} onChange={(e) => save({ barrio: e.target.value || null })}>
           <option value="">Elegí</option>{BARRIOS.map((b) => <option key={b}>{b}</option>)}</select></div>

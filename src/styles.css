@@ -279,3 +279,7 @@ nav.bar a.on{color:var(--ink)}
 .btn:disabled{opacity:.55}
 a.btn,a.vchip{text-decoration:none}
 a.link{text-decoration:none}
+
+.grid2 > *, .grid3 > *, .grid4 > *, .field{min-width:0}
+.inp{max-width:100%}
+input[type="date"].inp{display:block;width:100%;min-width:0;-webkit-appearance:none;appearance:none;min-height:44px;text-align:left}

@@ -5,7 +5,7 @@ import { useStore } from '../store';
 import { Av, AvStack, GroupPic, I, Sheet, Svg, TopBar, copyText, shareText } from '../components/ui';
 import { playBuzz } from '../components/fx';
 import { GROUP_COLORS, GROUP_ICONS, lineIconSvg } from '../components/groupIcon';
-import { activePlan, doneThisPeriod, goalTxt, nextPlan, overdue, pointsOf, sinceLast } from '../lib/derive';
+import { activePlan, doneThisPeriod, goalTxt, hasDonePlan, nextPlan, overdue, pointsOf, sinceLast } from '../lib/derive';
 import { PLANES, planTitle } from '../lib/logic/plan';
 import { POINTS } from '../lib/logic/points';
 import { cap, fmtDay, iso, today } from '../lib/logic/dates';
@@ -58,8 +58,8 @@ export default function GroupPage({ onPropose }: { onPropose: (groupId: string) 
       <div className={`sticker ${late && !ap && !np ? 'bg-pink' : 'bg-lime'}`}>
         <span className="eyebrow" style={{ color: 'inherit' }}>Objetivo: {goalTxt(g)}</span>
         <div className="row" style={{ alignItems: 'flex-end' }}>
-          <div className="grow"><div className="hand">Último plancito: hace {d} días</div>
-            <p className="small muted">{np ? 'Ya hay uno agendado.' : ap ? 'Hay uno en votación.' : late ? 'Pasó bastante. Les vamos a ir recordando.' : 'Vienen bien.'}</p></div>
+          <div className="grow"><div className="hand">{!hasDonePlan(g, plans) ? 'Todavía no hicieron ningún plancito' : d === 0 ? 'Último plancito: hoy' : d === 1 ? 'Último plancito: ayer' : `Último plancito: hace ${d} días`}</div>
+            <p className="small muted">{np ? 'Ya hay uno agendado.' : ap ? 'Hay uno en votación.' : !hasDonePlan(g, plans) ? '¿Arrancan con el primero?' : late ? 'Pasó bastante. Les vamos a ir recordando.' : 'Vienen bien.'}</p></div>
           <div style={{ textAlign: 'right' }}><div className="dots" style={{ justifyContent: 'flex-end' }}>{Array.from({ length: g.goal.n }, (_, i) => <i key={i} className={i < done ? 'on' : ''} />)}</div>
             <div className="small muted">{done}/{g.goal.n} este {g.goal.per}</div></div>
         </div>

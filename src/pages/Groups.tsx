@@ -3,7 +3,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { api } from '../data';
 import { useStore } from '../store';
 import { AvStack, GroupPic, Sheet, TopBar } from '../components/ui';
-import { activePlan, doneThisPeriod, goalTxt, nextPlan, overdue, sinceLast } from '../lib/derive';
+import { activePlan, doneThisPeriod, goalTxt, lastLabel, nextPlan, overdue } from '../lib/derive';
 import { GROUP_COLORS, GROUP_ICONS } from '../components/groupIcon';
 
 export default function Groups() {
@@ -36,10 +36,10 @@ export default function Groups() {
     <TopBar title="Grupos" right={<button className="btn sm" onClick={() => setParams({ crear: '1' })}>+ Crear</button>} />
     <div className="stack">
       {groups.map((g) => {
-        const ap = activePlan(g, plans), np = nextPlan(g, plans), done = doneThisPeriod(g, plans), d = sinceLast(g, plans);
+        const ap = activePlan(g, plans), np = nextPlan(g, plans), done = doneThisPeriod(g, plans);
         return <button key={g.id} className="card" style={{ textAlign: 'left' }} onClick={() => nav(`/g/${g.id}`)}>
           <div className="row"><GroupPic g={g} size={46} /><div className="grow"><h3>{g.name}</h3><p className="small muted">{g.kind === 'pareja' ? 'Pareja' : `${g.members.length} integrantes`} · {goalTxt(g)}</p></div>
-            {np ? <span className="chip ok">{np.answers.dia?.label}</span> : ap ? <span className="chip warn">En votación</span> : <span className={`chip ${overdue(g, plans) ? 'bad' : ''}`}>Hace {d} días</span>}</div>
+            {np ? <span className="chip ok">{np.answers.dia?.label}</span> : ap ? <span className="chip warn">En votación</span> : <span className={`chip ${overdue(g, plans) ? 'bad' : ''}`}>{lastLabel(g, plans)}</span>}</div>
           <div className="row between"><AvStack ids={g.members} /><span className="small muted">{done}/{g.goal.n} este {g.goal.per}</span></div>
         </button>;
       })}

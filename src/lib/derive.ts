@@ -1,7 +1,7 @@
 // Cálculos que dependen de los datos cargados (grupos, plancitos, deudas, notificaciones).
 import type { Group, Plan, PointEntry, Profile, Regalito } from '../data';
 import { daysToBirthday, majority, shareOf } from './logic/regalito';
-import { daysBetween, parseISO, today, upcomingDays } from './logic/dates';
+import { daysBetween, iso, parseISO, today, upcomingDays } from './logic/dates';
 import { planTitle } from './logic/plan';
 import { debtKey, settle } from './logic/split';
 import { levelOf } from './logic/points';
@@ -13,9 +13,19 @@ const PER = { semana: 7, mes: 30, 'año': 365 } as const;
 
 export function lastPlanDate(g: Group, plans: Plan[]) {
   const done = plans.filter((p) => p.groupId === g.id && p.status === 'realizado' && p.date).map((p) => p.date!).sort();
-  return done.length ? done[done.length - 1] : g.createdAt.slice(0, 10);
+  // Sin plancitos: contamos desde que se creó el grupo (en fecha local, no UTC).
+  return done.length ? done[done.length - 1] : iso(new Date(g.createdAt));
 }
-export const sinceLast = (g: Group, plans: Plan[]) => daysBetween(parseISO(lastPlanDate(g, plans)), today());
+export const hasDonePlan = (g: Group, plans: Plan[]) => plans.some((p) => p.groupId === g.id && p.status === 'realizado');
+export const sinceLast = (g: Group, plans: Plan[]) => Math.max(0, daysBetween(parseISO(lastPlanDate(g, plans)), today()));
+/** Texto corto para las listas: "Hace 12 días", "Hoy" o "Sin plancitos". */
+export function lastLabel(g: Group, plans: Plan[], short = false) {
+  if (!hasDonePlan(g, plans)) return short ? 'Nuevo' : 'Sin plancitos';
+  const d = sinceLast(g, plans);
+  if (d === 0) return 'Hoy';
+  if (d === 1) return 'Ayer';
+  return short ? `Hace ${d} d` : `Hace ${d} días`;
+}
 export const overdue = (g: Group, plans: Plan[]) => sinceLast(g, plans) > (PER[g.goal.per] / g.goal.n) * 1.2;
 export function doneThisPeriod(g: Group, plans: Plan[]) {
   const t = today();
@@ -53,7 +63,7 @@ export function notifications(o: { me: string; groups: Group[]; plans: Plan[]; r
       if (dd >= 0 && dd <= 7) out.push({ pr: 2, tone: 'var(--lilac)', groupId: g.id, title: dd === 0 ? 'Hoy tenés un plancito' : dd === 1 ? 'Mañana tenés un plancito' : `En ${dd} días tenés un plancito`, sub: `${planTitle(np.answers)} · ${np.answers.hora?.label ?? ''} · ${g.name}`, cta: 'Ver', to: `/p/${np.id}` });
     }
     if (!ap && !np && overdue(g, plans) && g.members.length > 1)
-      out.push({ pr: 4, tone: 'var(--lime)', groupId: g.id, title: `Hace ${sinceLast(g, plans)} días que no se juntan con ${g.name}`, sub: `El objetivo es ${goalTxt(g)}. ¿Craneamos algo?`, cta: 'Proponer', to: `/g/${g.id}?proponer=1` });
+      out.push({ pr: 4, tone: 'var(--lime)', groupId: g.id, title: hasDonePlan(g, plans) ? `Hace ${sinceLast(g, plans)} días que no se juntan con ${g.name}` : `${g.name} todavía no hizo su primer plancito`, sub: `El objetivo es ${goalTxt(g)}. ¿Craneamos algo?`, cta: 'Proponer', to: `/g/${g.id}?proponer=1` });
   }
   for (const r of o.regalitos.filter((x) => x.status !== 'entregado' && x.bdayUser !== me)) {
     const g = groups.find((x) => x.id === r.groupId); if (!g) continue;
