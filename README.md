@@ -19,7 +19,7 @@ Sin configurar Supabase corre en **modo local**: los datos quedan en el navegado
 
 ### 1. Supabase (base de datos y login)
 1. Creá un proyecto gratis en [supabase.com](https://supabase.com).
-2. En **SQL Editor → New query**, pegá el contenido de `supabase/migrations/0001_init.sql` y tocá **Run**. Después hacé lo mismo con `supabase/migrations/0002_regalito_push.sql`.
+2. En **SQL Editor → New query**, pegá el contenido de `supabase/migrations/0001_init.sql` y tocá **Run**. Después hacé lo mismo con `supabase/migrations/0002_regalito_push.sql` y con `supabase/migrations/0003_permisos.sql` (sin este último aparece "permission denied for table").
 3. En **Authentication → URL Configuration**, poné como **Site URL** la dirección de Netlify (por ejemplo `https://plancito.netlify.app`) y agregala también en **Redirect URLs** como `https://plancito.netlify.app/**`.
 4. Copiá la **Project URL** (Project Settings → Data API, tiene la forma `https://xxxx.supabase.co`) y la **Publishable key** (Project Settings → API Keys, empieza con `sb_publishable_`; en proyectos viejos se llama *anon key*).
 
