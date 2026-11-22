@@ -347,3 +347,5 @@ input[type="date"].inp{display:block;width:100%;min-width:0;-webkit-appearance:n
 .car-body .light{position:absolute;right:8px;top:8px;width:10px;height:8px;border-radius:4px;background:#FFD166;border:1.8px solid #2A1F1D}
 .car-body .wheel{position:absolute;bottom:-15px;width:28px;height:28px;border-radius:50%;background:#2A1F1D;box-shadow:inset 0 0 0 7px #2A1F1D, inset 0 0 0 12px #CFC7C0}
 .car-body .wheel.l{left:16%}.car-body .wheel.r{right:16%}
+
+nav.bar{grid-template-columns:repeat(5,1fr)}

@@ -107,7 +107,7 @@ export function makeSupabaseApi(url: string, key: string): Api {
     },
     async createGroup(input) {
       const me = await uid();
-      const g = must(await sb.from('groups').insert({ name: input.name, kind: input.kind, icon: input.icon, goal_n: input.goal.n, goal_per: input.goal.per }).select().single()) as any;
+      const g = must(await sb.from('groups').insert({ name: input.name, kind: input.kind, icon: input.icon, goal_n: input.goal.n, goal_per: input.goal.per, regalito_on: input.kind === 'amigos' }).select().single()) as any;
       must(await sb.from('group_members').insert({ group_id: g.id, user_id: me }));
       return toGroup({ ...g, group_members: [{ user_id: me }] });
     },

@@ -36,7 +36,9 @@ export default function RegalitoTab({ g }: { g: Group }) {
     <section className="sec"><h2>Próximos cumples</h2>
       <div className="card tight"><div className="list">{upcoming.map(({ m, d }) => <div key={m} className="li"><Av p={profiles[m]} size={34} />
         <div className="grow"><p style={{ fontWeight: 700 }}>{nick(m)}{m === me ? ' (vos)' : ''}</p><p className="small muted">{fmtDay(iso(nextBirthday(profiles[m].birthday!, t)), { day: 'numeric', month: 'long' })}</p></div>
-        <span className="num small muted">{d === 0 ? '¡hoy!' : `en ${d} días`}</span></div>)}</div>
+        <span className="num small muted">{d === 0 ? '¡hoy!' : `en ${d} días`}</span>
+        {m !== me && !regalitos.some((r) => r.groupId === g.id && r.bdayUser === m && r.status !== 'entregado') &&
+          <button className="btn sm soft" onClick={() => save(() => api.createRegalito(g.id, m, new Date(t.getTime() + d * 864e5).getFullYear(), { amount: g.budgetMode === 'usd' ? Math.round(g.budgetDefault / g.usdRate) : g.budgetDefault, mode: g.budgetMode }), `Arrancó el regalito de ${nick(m)}`)}>Arrancar</button>}</div>)}</div>
         {noBday.length > 0 && <p className="small muted">Falta que carguen su cumple: {noBday.map(nick).join(', ')}.</p>}</div>
     </section>
 

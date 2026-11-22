@@ -12,6 +12,7 @@ import PlanPage from './pages/PlanPage';
 import Profile from './pages/Profile';
 import Join from './pages/Join';
 import ResetPassword from './pages/ResetPassword';
+import Regalitos from './pages/Regalitos';
 
 export default function App() {
   const { ready, userId } = useStore();
@@ -40,6 +41,7 @@ export default function App() {
           <Route path="/g/:id" element={<GroupPage onPropose={(g) => setPropose(g)} />} />
           <Route path="/p/:id" element={<PlanPage />} />
           <Route path="/perfil" element={<Profile />} />
+          <Route path="/regalitos" element={<Regalitos />} />
           <Route path="/i/:code" element={<Join />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
@@ -48,6 +50,7 @@ export default function App() {
         <NavLink to="/" end className={({ isActive }) => (isActive ? 'on' : '')}>{I.home}Inicio</NavLink>
         <NavLink to="/grupos" className={({ isActive }) => (isActive || loc.pathname.startsWith('/g/') || loc.pathname.startsWith('/p/') ? 'on' : '')}>{I.groups}Grupos</NavLink>
         <button onClick={() => setPropose(null)} aria-label="Proponer plancito"><span className="plus">{I.plus}</span></button>
+        <NavLink to="/regalitos" className={({ isActive }) => (isActive ? 'on' : '')}>{I.gift}Regalitos</NavLink>
         <NavLink to="/perfil" className={({ isActive }) => (isActive ? 'on' : '')}>{I.me}Perfil</NavLink>
       </nav>
       {propose !== undefined && <ProposeSheet groupId={propose} onClose={() => setPropose(undefined)} />}

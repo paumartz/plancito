@@ -60,7 +60,7 @@ export const localApi: Api = {
 
   async listGroups() { return db.groups.filter((g) => g.members.includes(me())); },
   async createGroup(input) {
-    const g: Group = { id: uid(), ...input, inviteCode: uid().slice(0, 8), likes: [], spots: [], members: [me()], createdAt: now(), regalitoOn: false, budgetMode: 'ars', budgetDefault: 60000, usdRate: 1450 };
+    const g: Group = { id: uid(), ...input, inviteCode: uid().slice(0, 8), likes: [], spots: [], members: [me()], createdAt: now(), regalitoOn: input.kind === 'amigos', budgetMode: 'ars', budgetDefault: 60000, usdRate: 1450 };
     db.groups.push(g); save();
     return g;
   },

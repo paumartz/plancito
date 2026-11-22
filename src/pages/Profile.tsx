@@ -84,7 +84,7 @@ export default function Profile() {
       </div>
     </section>
 
-    <section className="sec"><h2>Tu lista de deseos</h2><p className="small muted" style={{ marginTop: -6 }}>La ven tus grupos cuando se acerca tu cumple.</p>
+    <section className="sec" id="deseos"><h2>Tu lista de deseos</h2><p className="small muted" style={{ marginTop: -6 }}>La ven tus grupos cuando se acerca tu cumple.</p>
       <div className="card tight">{me.wishlist.length > 0 && <div className="list">{me.wishlist.map((w, i) => <div key={i} className="li"><span className="grow">{wishTitle(w)}{wishUrl(w) && <> · <a className="link small" href={wishUrl(w)!} target="_blank" rel="noopener">Ver</a></>}</span>
         <button className="link small" onClick={() => save({ wishlist: me.wishlist.filter((_, j) => j !== i) })}>Quitar</button></div>)}</div>}
         <input className="inp" value={wish} onChange={(e) => setWish(e.target.value)} placeholder="Algo que te gustaría…" />

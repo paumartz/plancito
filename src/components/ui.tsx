@@ -55,6 +55,7 @@ export const I = {
   home: sv(<path d="M4 11 L12 4 L20 11 V20 H14 V14 H10 V20 H4Z" />, 24),
   groups: sv(<><circle cx="9" cy="9" r="3.5" /><circle cx="17" cy="10" r="2.6" /><path d="M3 20 c0-4 3-6 6-6 s6 2 6 6 M15 15 c3-.6 6 1 6 5" /></>, 24),
   plus: <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round"><path d="M12 5 V19 M5 12 H19" /></svg>,
+  gift: sv(<><rect x="4" y="10" width="16" height="10" rx="1.5" /><path d="M3 7 h18 v3 H3z M12 7 V20 M12 7 c-2-4-7-4-6-1 1 2 6 1 6 1 c2-4 7-4 6-1 -1 2-6 1-6 1" /></>, 24),
   me: sv(<><circle cx="12" cy="9" r="4" /><path d="M4 21 c0-4 4-7 8-7 s8 3 8 7" /></>, 24),
   back: sv(<path d="M15 5 L8 12 L15 19" />),
   bell: sv(<path d="M6 16 V11 a6 6 0 0 1 12 0 V16 L20 18 H4 Z M10 21 h4" />, 21),
