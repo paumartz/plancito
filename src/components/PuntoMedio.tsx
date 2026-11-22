@@ -57,7 +57,7 @@ export default function PuntoMedio({ people, focus }: { people: Profile[]; focus
       <p className="small" style={{ fontWeight: 700 }}>¿Dónde se juntan?</p>
       <div className="row wrap" style={{ gap: 7 }}>
         {barrios.map((b) => <button key={b} className={choice === b ? 'vchip on' : 'vchip'} onClick={() => setChoice(b)}>En {b} <span className="small" style={{ opacity: .7 }}>({whoIn(b)})</span></button>)}
-        <button className={choice === 'medio' ? 'vchip on' : 'vchip'} onClick={() => setChoice('medio')}>Buscar un punto medio</button>
+        <button className={choice === 'medio' ? 'vchip on' : 'vchip'} onClick={() => setChoice('medio')}>Sugerir punto medio</button>
       </div>
       {choice === 'medio' && <>
         <svg className="map" viewBox="0 0 320 200" role="img" aria-label={`Mapa de CABA: el punto medio queda cerca de ${near}`}>

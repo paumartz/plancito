@@ -1,6 +1,6 @@
 // Modo local: sin Supabase configurado, todo se guarda en el navegador.
 // Sirve para probar la app sola; para usarla con amigos hace falta Supabase.
-import type { Api, Buzz, Group, Note, Plan, PointEntry, Profile, Regalito } from './types';
+import type { Api, Buzz, Group, Note, Plan, PointEntry, Profile, Regalito, Ride } from './types';
 import { defaultAvatar } from '../components/avatarSvg';
 
 interface DB {
@@ -12,6 +12,7 @@ interface DB {
   buzzes: Buzz[];
   regalitos: Regalito[];
   notes?: Note[];
+  rides?: Ride[];
 }
 const KEY = 'plancito-local-v1';
 const uid = () => Math.random().toString(36).slice(2, 10) + Date.now().toString(36).slice(-4);
@@ -103,6 +104,11 @@ export const localApi: Api = {
   async sendBuzz(groupId, style, msg) { db.buzzes.push({ id: uid(), groupId, from: me(), style, msg, createdAt: now() }); save(); },
   async listBuzzes(groupIds) { return db.buzzes.filter((b) => groupIds.includes(b.groupId)); },
 
+  async listRides(planIds) { return (db.rides || []).filter((r) => planIds.includes(r.planId)); },
+  async addRide(planId, seats) { (db.rides ||= []).push({ id: uid(), planId, driver: me(), seats, riders: [] }); save(); },
+  async deleteRide(id) { db.rides = (db.rides || []).filter((r) => r.id !== id); save(); },
+  async joinRide(id) { const r = (db.rides || []).find((x) => x.id === id)!; if (r.riders.length >= r.seats) throw new Error('El auto ya está lleno'); if (!r.riders.includes(me())) r.riders.push(me()); save(); },
+  async leaveRide(id) { const r = (db.rides || []).find((x) => x.id === id)!; r.riders = r.riders.filter((u) => u !== me()); save(); },
   async listNotes(groupIds) { return (db.notes || []).filter((n) => groupIds.includes(n.groupId)); },
   async addNote(n) { (db.notes ||= []).push({ ...n, id: uid(), author: me(), createdAt: now() }); save(); },
   async deleteNote(id) { db.notes = (db.notes || []).filter((n) => n.id !== id); save(); },

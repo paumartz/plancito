@@ -62,6 +62,8 @@ export interface Buzz { id: string; groupId: string; from: string; style: string
 export type NoteKind = 'no-estoy' | 'semanal' | 'recomendacion' | 'fecha' | 'otro';
 export interface Note { id: string; groupId: string; author: string; kind: NoteKind; text: string; from?: string | null; to?: string | null; repeat?: number[] | null; moment?: string | null; createdAt: string }
 
+export interface Ride { id: string; planId: string; driver: string; seats: number; riders: string[] }
+
 export type RegalitoStatus = 'votando' | 'aprobado' | 'comprado' | 'entregado';
 export interface Regalito {
   id: string;
@@ -118,6 +120,11 @@ export interface Api {
   sendBuzz(groupId: string, style: string, msg: string): Promise<void>;
   listBuzzes(groupIds: string[]): Promise<Buzz[]>;
 
+  listRides(planIds: string[]): Promise<Ride[]>;
+  addRide(planId: string, seats: number): Promise<void>;
+  deleteRide(id: string): Promise<void>;
+  joinRide(id: string): Promise<void>;
+  leaveRide(id: string): Promise<void>;
   listNotes(groupIds: string[]): Promise<Note[]>;
   addNote(n: Omit<Note, 'id' | 'author' | 'createdAt'>): Promise<void>;
   deleteNote(id: string): Promise<void>;

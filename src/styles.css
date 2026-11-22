@@ -335,3 +335,15 @@ input[type="date"].inp{display:block;width:100%;min-width:0;-webkit-appearance:n
 .avpicker button{flex:0 0 84px;scroll-snap-align:start}
 .colorpick{display:flex;align-items:center;gap:8px;font-weight:700;font-size:13px}
 .colorpick input{width:44px;height:44px;border:1.5px solid var(--line);border-radius:12px;padding:2px;background:var(--card)}
+
+/* autito para "¿cómo llegamos?" */
+.car{padding:4px 6px 18px;--car:#BCD7EA}
+.car-cabin{background:color-mix(in srgb, var(--car) 45%, #FFFDF9);border:2.5px solid #2A1F1D;border-bottom:0;border-radius:44px 44px 6px 6px;padding:10px 16px 6px;display:flex;gap:6px;justify-content:center;flex-wrap:wrap;margin:0 18px}
+.seat{display:flex;flex-direction:column;align-items:center;gap:1px;min-width:44px}
+.seat small{font-size:10px;font-weight:700;color:var(--on-pastel);max-width:52px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.seat.driver small{color:var(--tomato)}
+.seat-free{width:40px;height:40px;border-radius:50%;border:2px dashed #2A1F1D;opacity:.45;display:grid;place-items:center;font-size:9px;font-weight:800;color:#2A1F1D;text-transform:uppercase}
+.car-body{position:relative;height:30px;background:var(--car);border:2.5px solid #2A1F1D;border-radius:16px 22px 12px 12px}
+.car-body .light{position:absolute;right:8px;top:8px;width:10px;height:8px;border-radius:4px;background:#FFD166;border:1.8px solid #2A1F1D}
+.car-body .wheel{position:absolute;bottom:-15px;width:28px;height:28px;border-radius:50%;background:#2A1F1D;box-shadow:inset 0 0 0 7px #2A1F1D, inset 0 0 0 12px #CFC7C0}
+.car-body .wheel.l{left:16%}.car-body .wheel.r{right:16%}

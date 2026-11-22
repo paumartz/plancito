@@ -180,6 +180,22 @@ export function makeSupabaseApi(url: string, key: string): Api {
       return rows.map((r) => ({ id: String(r.id), groupId: r.group_id, from: r.from_user, style: r.style, msg: r.msg, createdAt: r.created_at }));
     },
 
+    async listRides(planIds) {
+      if (!planIds.length) return [];
+      const r = await sb.from('plan_rides').select('*, plan_ride_riders(user_id)').in('plan_id', planIds);
+      if (r.error) { console.warn('Autos no disponibles:', r.error.message); return []; } // falta correr 0006_autos.sql
+      return (r.data as any[]).map((x) => ({ id: x.id, planId: x.plan_id, driver: x.driver, seats: x.seats, riders: (x.plan_ride_riders || []).map((y: any) => y.user_id) }));
+    },
+    async addRide(planId, seats) {
+      const r = await sb.from('plan_rides').insert({ plan_id: planId, seats });
+      if (r.error) throw new Error(/does not exist|schema cache/i.test(r.error.message) ? 'Falta correr 0006_autos.sql en Supabase' : r.error.message);
+    },
+    async deleteRide(id) { must(await sb.from('plan_rides').delete().eq('id', id)); },
+    async joinRide(id) {
+      const r = await sb.from('plan_ride_riders').insert({ ride_id: id });
+      if (r.error) throw new Error(/row-level security/i.test(r.error.message) ? 'El auto ya está lleno' : r.error.message);
+    },
+    async leaveRide(id) { const me = await uid(); must(await sb.from('plan_ride_riders').delete().eq('ride_id', id).eq('user_id', me!)); },
     async listNotes(groupIds) {
       if (!groupIds.length) return [];
       const r = await sb.from('group_notes').select('*').in('group_id', groupIds);

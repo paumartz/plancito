@@ -13,6 +13,7 @@ import { debtKey, settle } from '../lib/logic/split';
 import { POINTS } from '../lib/logic/points';
 import { fmtDay, iso, money, today } from '../lib/logic/dates';
 import PuntoMedio from '../components/PuntoMedio';
+import Rides from '../components/Rides';
 
 export default function PlanPage() {
   const { id } = useParams();
@@ -175,6 +176,7 @@ function PlanView({ p, g }: { p: Plan; g: Group }) {
       </section>
       {p.status === 'definido' && a.lugar && ['afuera', 'impro'].includes(a.lugar.id) && <section className="sec"><h2>¿Dónde exactamente?</h2>
         <PuntoMedio people={att.map((x) => st.profiles[x]).filter(Boolean)} focus={({ cafe: 'cafés', cena: 'restos', almuerzo: 'restos', desayuno: 'cafés', birras: 'bares' } as Record<string, string>)[a.plan?.id || ''] || 'lugares'} /></section>}
+      {p.status === 'definido' && <Rides p={p} g={g} att={att} />}
       {p.status === 'definido' ? <>
         <div className="card tight"><div className="row between wrap"><h3>Recordatorios</h3><a className="btn sm" href={gcalUrl(a, g.name, link)} target="_blank" rel="noopener">{I.cal} Google Calendar</a></div>
           <p className="small muted">Te avisamos para que no tengas que acordarte.</p>
