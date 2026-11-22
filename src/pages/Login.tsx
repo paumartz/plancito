@@ -1,78 +1,61 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { api } from '../data';
 import { avatar, TEMPLATES } from '../components/avatarSvg';
 
-// Entramos con un código por mail (no con un link): en iPhone, el link abre Safari y la sesión
-// queda ahí en vez de en la app de la pantalla de inicio. El código se escribe en la propia app.
+// Mail y contraseña: se entra directo desde la app de la pantalla de inicio, sin mails ni links
+// (en iPhone, un link del mail abre Safari y la sesión no llega a la app instalada).
 export default function Login() {
+  const [mode, setMode] = useState<'entrar' | 'crear'>('crear');
   const [email, setEmail] = useState('');
-  const [code, setCode] = useState('');
-  const [state, setState] = useState<'idle' | 'busy' | 'code' | 'checking'>('idle');
+  const [pw, setPw] = useState('');
+  const [busy, setBusy] = useState(false);
   const [err, setErr] = useState('');
-  const [wait, setWait] = useState(0);
-
-  useEffect(() => { if (wait <= 0) return; const t = setTimeout(() => setWait(wait - 1), 1000); return () => clearTimeout(t); }, [wait]);
+  const [info, setInfo] = useState('');
 
   const friendly = (m: string) =>
-    /rate limit|too many/i.test(m) ? 'Pediste varios códigos seguidos y el servidor de mails puso una pausa. Usá el último código que te llegó (sirve por una hora) o probá de nuevo en un rato.'
-      : /expired|invalid|otp/i.test(m) ? 'El código no es correcto o ya venció. Revisá el último mail o pedí uno nuevo.'
+    /invalid login credentials/i.test(m) ? 'El mail o la contraseña no son correctos.'
+      : /already registered|already exists/i.test(m) ? 'Ya hay una cuenta con ese mail. Tocá "Ya tengo cuenta" y entrá con tu contraseña.'
+      : /email not confirmed/i.test(m) ? 'Esta cuenta todavía no está confirmada. Pedile a quien administra Plancito que apague "Confirm email" en Supabase.'
+      : /password/i.test(m) && /6|short|least/i.test(m) ? 'La contraseña tiene que tener al menos 6 caracteres.'
+      : /rate limit|too many/i.test(m) ? 'Muchos intentos seguidos. Esperá un ratito y probá de nuevo.'
+      : /Failed to fetch|NetworkError|Load failed/i.test(m) ? 'No hay conexión con el servidor. Revisá tu internet.'
       : m;
 
-  async function send(e?: React.FormEvent) {
-    e?.preventDefault();
+  async function submit(e: React.FormEvent) {
+    e.preventDefault();
+    setErr(''); setInfo('');
     if (!/^\S+@\S+\.\S+$/.test(email.trim())) { setErr('Poné un mail válido.'); return; }
-    setErr(''); setState('busy');
+    if (api.mode !== 'local' && pw.length < 6) { setErr('La contraseña tiene que tener al menos 6 caracteres.'); return; }
+    setBusy(true);
     try {
-      const r = await api.signIn(email.trim());
-      if (r === 'sent') { setState('code'); setWait(60); } else setState('idle');
-    } catch (ex) { setErr(friendly((ex as Error).message || '')); setState('idle'); }
+      if (mode === 'crear') {
+        const r = await api.signUp(email.trim(), pw);
+        if (r === 'confirm') setInfo('Te mandamos un mail para confirmar la cuenta. Después volvé acá y entrá con tu contraseña.');
+      } else await api.signIn(email.trim(), pw);
+    } catch (ex) { setErr(friendly((ex as Error).message || '')); }
+    finally { setBusy(false); }
   }
-
-  async function verify(e?: React.FormEvent) {
-    e?.preventDefault();
-    const c = code.replace(/\D/g, '');
-    if (c.length < 6) { setErr('El código tiene 6 números.'); return; }
-    setErr(''); setState('checking');
-    try { await api.verifyCode(email.trim(), c); }
-    catch (ex) { setErr(friendly((ex as Error).message || '')); setState('code'); }
-  }
-
-  const head = <>
-    <div className="row" style={{ justifyContent: 'center' }}>
-      {TEMPLATES.slice(0, 4).map((t, i) => <span key={i} className="avb" style={{ width: 54, height: 54, marginLeft: i ? -12 : 0 }} dangerouslySetInnerHTML={{ __html: avatar(t, 54) }} />)}
-    </div>
-    <div className="logo">Plancito</div>
-  </>;
-
-  if (state === 'code' || state === 'checking') return (
-    <div className="center-page">
-      <form className="login" onSubmit={verify}>
-        {head}
-        <div><h2>Revisá tu mail</h2><p className="muted small">Te mandamos un código de 6 números a <b>{email}</b>. Escribilo acá.</p></div>
-        <input id="code" className="inp" inputMode="numeric" autoComplete="one-time-code" maxLength={8} autoFocus
-          style={{ fontSize: 28, letterSpacing: '.35em', textAlign: 'center', fontWeight: 700 }}
-          value={code} onChange={(e) => setCode(e.target.value.replace(/\D/g, ''))} placeholder="······" aria-label="Código de 6 números" />
-        {err && <p className="err">{err}</p>}
-        <button className="btn tomato full" disabled={state === 'checking'}>{state === 'checking' ? 'Entrando…' : 'Entrar'}</button>
-        <div className="row" style={{ justifyContent: 'center', gap: 16 }}>
-          <button type="button" className="link small" disabled={wait > 0} onClick={() => send()}>{wait > 0 ? `Reenviar en ${wait} s` : 'Reenviar código'}</button>
-          <button type="button" className="link small" onClick={() => { setState('idle'); setCode(''); setErr(''); }}>Cambiar mail</button>
-        </div>
-        <p className="small muted">Si no lo ves, buscalo en spam o promociones.</p>
-      </form>
-    </div>
-  );
 
   return (
     <div className="center-page">
-      <form className="login" onSubmit={send}>
-        {head}
+      <form className="login" onSubmit={submit}>
+        <div className="row" style={{ justifyContent: 'center' }}>
+          {TEMPLATES.slice(0, 4).map((t, i) => <span key={i} className="avb" style={{ width: 54, height: 54, marginLeft: i ? -12 : 0 }} dangerouslySetInnerHTML={{ __html: avatar(t, 54) }} />)}
+        </div>
+        <div className="logo">Plancito</div>
         <p className="muted">Organizá juntadas con tus amigos sin perderte nada en el chat: cuándo, qué, dónde y cuentas claras.</p>
+        <div className="seg" role="tablist">
+          <button type="button" className={mode === 'crear' ? 'on' : ''} onClick={() => { setMode('crear'); setErr(''); }}>Soy nuevo/a</button>
+          <button type="button" className={mode === 'entrar' ? 'on' : ''} onClick={() => { setMode('entrar'); setErr(''); }}>Ya tengo cuenta</button>
+        </div>
         <div className="field" style={{ textAlign: 'left' }}><label htmlFor="email">Tu mail</label>
           <input id="email" className="inp" type="email" autoComplete="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="vos@mail.com" /></div>
+        {api.mode !== 'local' && <div className="field" style={{ textAlign: 'left' }}><label htmlFor="pw">{mode === 'crear' ? 'Elegí una contraseña' : 'Tu contraseña'}</label>
+          <input id="pw" className="inp" type="password" autoComplete={mode === 'crear' ? 'new-password' : 'current-password'} value={pw} onChange={(e) => setPw(e.target.value)} placeholder="Mínimo 6 caracteres" /></div>}
         {err && <p className="err">{err}</p>}
-        <button className="btn tomato full" disabled={state === 'busy'}>{state === 'busy' ? 'Enviando…' : api.mode === 'local' ? 'Entrar' : 'Mandame el código'}</button>
-        <p className="small muted">{api.mode === 'local' ? 'Modo local: no se manda ningún mail.' : 'Sin contraseñas: te llega un código para entrar.'}</p>
+        {info && <div className="sticker bg-lime"><p className="small">{info}</p></div>}
+        <button className="btn tomato full" disabled={busy}>{busy ? 'Un segundo…' : mode === 'crear' ? 'Crear mi cuenta' : 'Entrar'}</button>
+        {api.mode === 'local' && <p className="small muted">Modo local: no hace falta contraseña.</p>}
       </form>
     </div>
   );

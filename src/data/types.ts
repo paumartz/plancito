@@ -81,8 +81,10 @@ export type RegalitoPatch = Partial<{ owner: string | null; status: RegalitoStat
 export interface Api {
   mode: 'local' | 'supabase';
   currentUserId(): Promise<string | null>;
-  signIn(email: string): Promise<'sent' | 'signed-in'>;
-  verifyCode(email: string, code: string): Promise<void>;
+  /** Entra con mail y contraseña. */
+  signIn(email: string, password: string): Promise<void>;
+  /** Crea la cuenta. Devuelve 'confirm' si Supabase todavía pide confirmar el mail. */
+  signUp(email: string, password: string): Promise<'ok' | 'confirm'>;
   signOut(): Promise<void>;
   onAuthChange(cb: () => void): () => void;
 

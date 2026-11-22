@@ -35,6 +35,7 @@ const plan = (id: string) => db.plans.find((p) => p.id === id)!;
 export const localApi: Api = {
   mode: 'local',
   async currentUserId() { return db.session; },
+  async signUp(email) { await localApi.signIn(email, ''); return 'ok'; },
   async signIn(email) {
     const id = 'u_' + email.toLowerCase().replace(/[^a-z0-9]/g, '');
     if (!db.profiles[id]) {
@@ -42,9 +43,7 @@ export const localApi: Api = {
       db.profiles[id] = { id, name: nick, nick, alias: '', bank: '', avatar: defaultAvatar(), zumbido: { style: 'clasico', msg: '¿Y el plancito?', sound: true }, wishlist: [], askContact: {} };
     }
     db.session = id; save();
-    return 'signed-in';
   },
-  async verifyCode() { /* en modo local se entra sin código */ },
   async signOut() { db.session = null; save(); },
   onAuthChange(cb) { listeners.add(cb); return () => listeners.delete(cb); },
 

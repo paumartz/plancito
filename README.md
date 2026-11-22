@@ -21,7 +21,7 @@ Sin configurar Supabase corre en **modo local**: los datos quedan en el navegado
 1. Creá un proyecto gratis en [supabase.com](https://supabase.com).
 2. En **SQL Editor → New query**, pegá el contenido de `supabase/migrations/0001_init.sql` y tocá **Run**. Después hacé lo mismo con `supabase/migrations/0002_regalito_push.sql` y con `supabase/migrations/0003_permisos.sql` (sin este último aparece "permission denied for table").
 3. En **Authentication → URL Configuration**, poné como **Site URL** la dirección de Netlify (por ejemplo `https://plancito.netlify.app`) y agregala también en **Redirect URLs** como `https://plancito.netlify.app/**`.
-4. **Mail con código** (para que en iPhone se pueda entrar desde la app de la pantalla de inicio): en **Authentication → Emails → Templates**, en las plantillas **Magic Link** y **Confirm signup**, reemplazá el contenido por el de `supabase/email/codigo.html` (muestra un código de 6 números en vez de un link). Asunto sugerido: `Tu código para entrar a Plancito`.
+4. **Login con mail y contraseña** (así en iPhone se entra desde la app de la pantalla de inicio y no se manda ningún mail): en **Authentication → Sign In / Providers → Email**, apagá **Confirm email** y guardá.
 5. Copiá la **Project URL** (Project Settings → Data API, tiene la forma `https://xxxx.supabase.co`) y la **Publishable key** (Project Settings → API Keys, empieza con `sb_publishable_`; en proyectos viejos se llama *anon key*).
 
 ### 2. Netlify (publicación)

@@ -47,12 +47,14 @@ export function makeSupabaseApi(url: string, key: string): Api {
   return {
     mode: 'supabase',
     currentUserId: uid,
-    async signIn(email) {
-      must(await sb.auth.signInWithOtp({ email, options: { emailRedirectTo: window.location.href } }));
-      return 'sent';
+    async signIn(email, password) {
+      const { error } = await sb.auth.signInWithPassword({ email, password });
+      if (error) throw new Error(error.message);
     },
-    async verifyCode(email, code) {
-      must(await sb.auth.verifyOtp({ email, token: code, type: 'email' }));
+    async signUp(email, password) {
+      const { data, error } = await sb.auth.signUp({ email, password });
+      if (error) throw new Error(error.message);
+      return data.session ? 'ok' : 'confirm';
     },
     async signOut() { await sb.auth.signOut(); },
     onAuthChange(cb) {
