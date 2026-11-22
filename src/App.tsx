@@ -23,12 +23,12 @@ export default function App() {
   if (!ready) return <div className="center-page"><p className="muted">Cargando…</p></div>;
   if (!userId) {
     // Guardamos adónde quería ir (por ejemplo un link de invitación) para volver después del login.
-    if (loc.pathname !== '/') try { sessionStorage.setItem('plancito-after-login', loc.pathname); } catch { /* */ }
+    if (loc.pathname !== '/') try { sessionStorage.setItem('plancito-after-login', loc.pathname + loc.search); } catch { /* */ }
     return <Login />;
   }
   let after: string | null = null;
   try { after = sessionStorage.getItem('plancito-after-login'); if (after) sessionStorage.removeItem('plancito-after-login'); } catch { /* */ }
-  if (after && after !== loc.pathname) return <Navigate to={after} replace />;
+  if (after && after !== loc.pathname + loc.search) return <Navigate to={after} replace />;
 
   return (
     <div className="shell">

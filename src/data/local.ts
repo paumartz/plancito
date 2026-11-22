@@ -84,6 +84,7 @@ export const localApi: Api = {
     db.plans.push(p); save();
     return p.id;
   },
+  async deletePlan(id) { db.plans = db.plans.filter((p) => p.id !== id); save(); },
   async updatePlan(id, patch) { Object.assign(plan(id), patch); save(); },
   async saveBallot(planId, round, data, done) {
     const p = plan(planId);

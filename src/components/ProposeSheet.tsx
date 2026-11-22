@@ -39,7 +39,7 @@ export default function ProposeSheet({ groupId, onClose }: { groupId: string | n
       const id = await api.createPlan(g.id, proposed);
       if (proposed.dia && proposed.momento) await api.saveBallot(id, 'cuando', { slots: [slotId(proposed.dia, proposed.momento)] }, true);
       await reload();
-      setCreated({ id, text: buildShare(proposed, `${location.origin}/p/${id}`, days, Math.max(1, g.members.length - 1)) });
+      setCreated({ id, text: buildShare(proposed, `${location.origin}/i/${g.inviteCode}?p=${id}`, days, g.kind === 'pareja' || g.members.length === 2 ? 1 : 2) });
     } catch (e) {
       toast('No se pudo crear el plancito: ' + (e as Error).message);
     } finally { setBusy(false); }
@@ -47,8 +47,8 @@ export default function ProposeSheet({ groupId, onClose }: { groupId: string | n
 
   if (created) return (
     <Sheet onClose={onClose}>
-      <h2>{(g?.members.length || 0) === 2 ? `¡Listo! Ahora avisale a ${nick(g!.members.find((m) => m !== userId)!)}` : '¡Listo! Ahora avisale al grupo'}</h2>
-      <p className="muted small">{(g?.members.length || 0) === 2 ? 'Mandale esto por WhatsApp:' : 'Mandá esto al grupo de WhatsApp:'}</p>
+      <h2>{(g?.members.length || 0) === 2 ? `¡Listo! Ahora avisale a ${nick(g!.members.find((m) => m !== userId)!)}` : g?.kind === 'pareja' ? '¡Listo! Ahora avisale a tu pareja' : '¡Listo! Ahora avisale al grupo'}</h2>
+      <p className="muted small">{(g?.members.length || 0) < 2 ? 'Todavía no está en el grupo: con este mensaje se suma y vota.' : (g?.members.length || 0) === 2 ? 'Mandale esto por WhatsApp:' : 'Mandá esto al grupo de WhatsApp:'}</p>
       <div className="card tight" style={{ fontSize: 15 }}>{created.text}</div>
       <div className="grid2">
         <button className="btn ghost" onClick={() => copyText(created.text, toast)}>{I.copy} Copiar</button>

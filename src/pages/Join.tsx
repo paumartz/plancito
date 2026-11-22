@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { api } from '../data';
 import { useStore } from '../store';
 import { TopBar } from '../components/ui';
@@ -8,13 +8,17 @@ export default function Join() {
   const { code } = useParams();
   const { groups, reload, toast } = useStore();
   const nav = useNavigate();
+  const [params] = useSearchParams();
+  const planId = params.get('p');
   const [preview, setPreview] = useState<{ id: string; name: string; members: number } | null | undefined>(undefined);
 
   useEffect(() => { api.groupPreview(code!).then(setPreview).catch(() => setPreview(null)); }, [code]);
   const already = preview && groups.some((g) => g.id === preview.id);
+  // Si ya es parte y el link venía de un plancito, va directo al plancito.
+  useEffect(() => { if (already && planId) nav(`/p/${planId}`, { replace: true }); }, [already, planId, nav]);
 
   async function join() {
-    try { const id = await api.joinGroup(code!); await reload(); toast('¡Te sumaste al grupo!'); nav(`/g/${id}`, { replace: true }); }
+    try { const id = await api.joinGroup(code!); await reload(); toast('¡Te sumaste al grupo!'); nav(planId ? `/p/${planId}` : `/g/${id}`, { replace: true }); }
     catch (e) { toast((e as Error).message); }
   }
 

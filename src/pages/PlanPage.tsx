@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { useParams } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import { api, type Group, type Plan } from '../data';
 import { useStore } from '../store';
 import { Av, AvStack, I, Sheet, TopBar, copyText, shareText } from '../components/ui';
@@ -30,7 +30,8 @@ function PlanView({ p, g }: { p: Plan; g: Group }) {
   const att = attendees(g, p);
   const imOut = p.out.some((o) => o.who === me);
   const link = `${location.origin}/p/${p.id}`;
-  const [sheet, setSheet] = useState<null | 'out' | 'done'>(null);
+  const [sheet, setSheet] = useState<null | 'out' | 'done' | 'cancel'>(null);
+  const nav = useNavigate();
   const closing = useRef(false);
 
   // Mi voto en borrador: se guarda en cada toque.
@@ -68,18 +69,26 @@ function PlanView({ p, g }: { p: Plan; g: Group }) {
   }
 
   // Si ya respondieron todos, la ronda se cierra sola.
-  const allDone = p.status === 'votando' && p.round && att.length > 0 && att.every((x) => effDone(p, p.round!).includes(x));
+  const alone = g.members.length < 2;
+  const allDone = p.status === 'votando' && p.round && att.length >= 2 && att.every((x) => effDone(p, p.round!).includes(x));
   useEffect(() => { if (allDone) closeRound(); }, [allDone]); // eslint-disable-line react-hooks/exhaustive-deps
 
   return <>
     <TopBar title={planTitle(p.answers, p.status === 'votando')} back={`/g/${g.id}`} />
     <p className="small muted" style={{ marginTop: -14 }}>{g.name} · propuesto por {nick(p.createdBy)} el {fmtDay(p.createdAt.slice(0, 10), { day: 'numeric', month: 'short' })}</p>
     {p.status === 'votando' ? Voting() : Defined()}
+    {p.status !== 'realizado' && p.createdBy === me && <button className="link small" style={{ alignSelf: 'center', color: 'var(--ink-2)' }} onClick={() => setSheet('cancel')}>Cancelar este plancito</button>}
+    {sheet === 'cancel' && <Sheet onClose={() => setSheet(null)}><h2>¿Cancelar el plancito?</h2><p className="small muted">Se borra para todo el grupo, con sus votos.</p>
+      <div className="grid2"><button className="btn ghost" onClick={() => setSheet(null)}>No</button>
+        <button className="btn tomato" onClick={() => api.deletePlan(p.id).then(async () => { await reload(); toast('Plancito cancelado'); nav(`/g/${g.id}`, { replace: true }); }).catch((e) => toast('No se pudo cancelar: ' + (e as Error).message))}>Sí, cancelar</button></div></Sheet>}
     {sheet === 'out' && <OutSheet p={p} onClose={() => setSheet(null)} />}
     {sheet === 'done' && <DoneSheet p={p} g={g} att={att} onClose={() => setSheet(null)} />}
   </>;
 
   function Footer() {
+    if (alone) return <div className="sticker bg-peach"><h3>Falta que se sume {g.kind === 'pareja' ? 'tu pareja' : 'alguien más'}</h3>
+      <p className="small">La votación sigue abierta hasta que entre al grupo y responda. Mandale el link de invitación:</p>
+      <button className="btn" onClick={() => shareText(`Sumate a ${g.name} en Plancito: ${location.origin}/i/${g.inviteCode}?p=${p.id}`, toast)}>Mandar invitación</button></div>;
     const done = att.filter((x) => ed.includes(x)), missing = att.filter((x) => x !== me && !ed.includes(x));
     return <>
       <div className="card tight"><div className="row between"><span className="small" style={{ fontWeight: 700 }}>Respondieron {done.length} de {att.length}</span><AvStack ids={done} size={24} /></div>
@@ -87,7 +96,7 @@ function PlanView({ p, g }: { p: Plan; g: Group }) {
         <p className="small muted">Se cierra sola cuando responden todos.</p></div>
       {!imOut && (iDone ? <>
         <p className="small" style={{ textAlign: 'center', fontWeight: 700, color: 'var(--ok)' }}>{iProposed ? 'Tu propuesta ya cuenta como tu voto. Si querés, sumá otras opciones.' : 'Listo, ya está lo tuyo. Podés cambiarlo hasta que cierre.'}</p>
-        <button className="btn ghost full" onClick={closeRound}>Cerrar ahora con lo que hay</button>
+        {!alone && <button className="btn ghost full" onClick={closeRound}>Cerrar ahora con lo que hay</button>}
       </> : <button className="btn tomato full" onClick={() => {
         if (round === 'cuando' && !(mine.slots || []).length) { toast('Marcá al menos un horario'); return; }
         save(mine, true).then(() => toast('¡Listo! Te avisamos cuando se defina'));

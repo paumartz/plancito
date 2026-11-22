@@ -102,6 +102,7 @@ export interface Api {
 
   listPlans(groupIds: string[]): Promise<Plan[]>;
   createPlan(groupId: string, proposed: Proposed): Promise<string>;
+  deletePlan(id: string): Promise<void>;
   updatePlan(id: string, patch: Partial<Pick<Plan, 'status' | 'round' | 'answers' | 'date' | 'reminders' | 'roles'>>): Promise<void>;
   saveBallot(planId: string, round: Round, data: object, done: boolean): Promise<void>;
   dropOut(planId: string, reason: string): Promise<void>;

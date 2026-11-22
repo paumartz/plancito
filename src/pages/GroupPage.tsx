@@ -55,6 +55,9 @@ export default function GroupPage({ onPropose }: { onPropose: (groupId: string) 
       <button key={k} className={`tab ${tab === k ? 'on' : ''}`} onClick={() => setTab(k)}>{cap(k)}</button>)}</div>
 
     {tab === 'plancitos' && <>
+      {g.members.length < 2 && <div className="sticker bg-peach"><h3>{g.kind === 'pareja' ? 'Falta que se sume tu pareja' : 'Todavía estás solo/a en el grupo'}</h3>
+        <p className="small">Podés proponer un plancito igual: se vota cuando se sumen. Mandá la invitación:</p>
+        <button className="btn" onClick={() => setParams({ invitar: '1' })}>Invitar</button></div>}
       <div className={`sticker ${late && !ap && !np ? 'bg-pink' : 'bg-lime'}`}>
         <span className="eyebrow" style={{ color: 'inherit' }}>Objetivo: {goalTxt(g)}</span>
         <div className="row" style={{ alignItems: 'flex-end' }}>

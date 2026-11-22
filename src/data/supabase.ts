@@ -141,6 +141,10 @@ export function makeSupabaseApi(url: string, key: string): Api {
       const r = must(await sb.from('plans').insert({ group_id: groupId, proposed, round: 'cuando' }).select('id').single()) as any;
       return r.id;
     },
+    async deletePlan(id) {
+      const rows = must(await sb.from('plans').delete().eq('id', id).select('id')) as any[];
+      if (!rows.length) throw new Error('No tenés permiso para borrarlo');
+    },
     async updatePlan(id, patch) { must(await sb.from('plans').update(patch).eq('id', id)); },
     async saveBallot(planId, round, data, done) {
       const me = await uid();
