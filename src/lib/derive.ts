@@ -1,5 +1,6 @@
 // Cálculos que dependen de los datos cargados (grupos, plancitos, deudas, notificaciones).
-import type { Group, Plan, PointEntry } from '../data';
+import type { Group, Plan, PointEntry, Profile, Regalito } from '../data';
+import { daysToBirthday, majority, shareOf } from './logic/regalito';
 import { daysBetween, parseISO, today, upcomingDays } from './logic/dates';
 import { planTitle } from './logic/plan';
 import { debtKey, settle } from './logic/split';
@@ -36,7 +37,7 @@ export const myLevel = (points: PointEntry[], me: string) => levelOf(pointsOf(po
 export interface Notif { tone: string; who?: string; groupId?: string; title: string; sub: string; cta: string; to?: string; buzzId?: string; pr: number }
 
 /** Notificaciones ordenadas: primero la plata que debés. */
-export function notifications(o: { me: string; groups: Group[]; plans: Plan[]; buzzes: { id: string; from: string; groupId: string; msg?: string | null }[]; nick: (id: string) => string; seenBuzz: (id: string) => boolean }): Notif[] {
+export function notifications(o: { me: string; groups: Group[]; plans: Plan[]; regalitos: Regalito[]; profiles: Record<string, Profile>; buzzes: { id: string; from: string; groupId: string; msg?: string | null }[]; nick: (id: string) => string; seenBuzz: (id: string) => boolean }): Notif[] {
   const { me, groups, plans, nick } = o, out: Notif[] = [];
   for (const g of groups) {
     for (const p of plans.filter((x) => x.groupId === g.id && x.status === 'realizado')) {
@@ -53,6 +54,17 @@ export function notifications(o: { me: string; groups: Group[]; plans: Plan[]; b
     }
     if (!ap && !np && overdue(g, plans) && g.members.length > 1)
       out.push({ pr: 4, tone: 'var(--lime)', groupId: g.id, title: `Hace ${sinceLast(g, plans)} días que no se juntan con ${g.name}`, sub: `El objetivo es ${goalTxt(g)}. ¿Craneamos algo?`, cta: 'Proponer', to: `/g/${g.id}?proponer=1` });
+  }
+  for (const r of o.regalitos.filter((x) => x.status !== 'entregado' && x.bdayUser !== me)) {
+    const g = groups.find((x) => x.id === r.groupId); if (!g) continue;
+    const el = g.members.filter((m) => m !== r.bdayUser), bd = o.profiles[r.bdayUser]?.birthday, d = bd ? daysToBirthday(bd, today()) : 0;
+    const to = `/g/${g.id}?tab=regalito`;
+    if (r.status === 'comprado' && r.owner && r.owner !== me && !r.payments.includes(me))
+      out.push({ pr: 0, tone: 'var(--pink)', who: r.owner, title: `Pagale $${shareOf(r.cost || 0, el.length).toLocaleString('es-AR')} a ${nick(r.owner)} por el regalito`, sub: `Cumple de ${nick(r.bdayUser)} · ${g.name}`, cta: 'Pagar', to });
+    else if (r.proposal && !r.budgetVotes.some((v) => v.userId === me))
+      out.push({ pr: 1, tone: 'var(--sky)', who: r.bdayUser, title: '¿Actualizamos el presupuesto del regalito?', sub: `Cumple de ${nick(r.bdayUser)} en ${d} días · ${g.name}`, cta: 'Votar', to });
+    else if (r.status === 'votando' && !r.ideas.some((i) => i.votes.includes(me)))
+      out.push({ pr: 1, tone: 'var(--sky)', who: r.bdayUser, title: `Faltan ${d} días para el cumple de ${nick(r.bdayUser)}`, sub: r.ideas.length ? `Hay ${r.ideas.length} ideas para votar · se aprueba con ${majority(el.length)}` : 'Todavía no hay ideas de regalo. ¿Proponés una?', cta: 'Ver', to });
   }
   for (const b of o.buzzes.filter((x) => x.from !== me && !o.seenBuzz(x.id)))
     out.push({ pr: 3, tone: 'var(--sky)', who: b.from, title: `${nick(b.from)} te mandó un zumbido`, sub: `${groups.find((g) => g.id === b.groupId)?.name ?? ''}${b.msg ? ` · “${b.msg}”` : ''}`, cta: 'Ver', buzzId: b.id });

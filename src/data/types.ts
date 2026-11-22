@@ -12,6 +12,8 @@ export interface Profile {
   barrio?: string | null;
   avatar: AvatarOpts;
   zumbido: { style: string; msg: string; sound: boolean };
+  wishlist: string[];
+  askContact: { name?: string; rel?: string; phone?: string };
 }
 
 export interface Group {
@@ -26,6 +28,10 @@ export interface Group {
   spots: Spot[];
   members: string[];
   createdAt: string;
+  regalitoOn: boolean;
+  budgetMode: 'ars' | 'usd';
+  budgetDefault: number;
+  usdRate: number;
 }
 
 export type PlanStatus = 'votando' | 'definido' | 'realizado';
@@ -53,6 +59,25 @@ export interface Plan {
 export interface PointEntry { userId: string; groupId: string; kind: string; pts: number; createdAt: string }
 export interface Buzz { id: string; groupId: string; from: string; style: string; msg?: string | null; createdAt: string }
 
+export type RegalitoStatus = 'votando' | 'aprobado' | 'comprado' | 'entregado';
+export interface Regalito {
+  id: string;
+  groupId: string;
+  bdayUser: string;
+  year: number;
+  owner: string | null;
+  status: RegalitoStatus;
+  budget: { amount: number; mode: 'ars' | 'usd'; since: string };
+  proposal: { amount: number; pct: number } | null;
+  chosenIdea: string | null;
+  cost: number | null;
+  ideas: { id: string; title: string; price: number; by: string; votes: string[] }[];
+  budgetVotes: { userId: string; yes: boolean }[];
+  payments: string[];
+  createdAt: string;
+}
+export type RegalitoPatch = Partial<{ owner: string | null; status: RegalitoStatus; budget_amount: number; budget_mode: 'ars' | 'usd'; budget_since: string; proposal_amount: number | null; proposal_pct: number | null; chosen_idea: string | null; cost: number | null }>;
+
 export interface Api {
   mode: 'local' | 'supabase';
   currentUserId(): Promise<string | null>;
@@ -65,7 +90,7 @@ export interface Api {
 
   listGroups(): Promise<Group[]>;
   createGroup(input: Pick<Group, 'name' | 'kind' | 'goal' | 'icon'>): Promise<Group>;
-  updateGroup(id: string, patch: Partial<Pick<Group, 'name' | 'icon' | 'goal' | 'likes' | 'spots' | 'photoUrl'>>): Promise<void>;
+  updateGroup(id: string, patch: Partial<Pick<Group, 'name' | 'icon' | 'goal' | 'likes' | 'spots' | 'photoUrl' | 'regalitoOn' | 'budgetMode' | 'budgetDefault' | 'usdRate'>>): Promise<void>;
   groupPreview(code: string): Promise<{ id: string; name: string; members: number } | null>;
   joinGroup(code: string): Promise<string>;
 
@@ -82,6 +107,16 @@ export interface Api {
   addPoints(entries: Omit<PointEntry, 'createdAt'>[]): Promise<void>;
   sendBuzz(groupId: string, style: string, msg: string): Promise<void>;
   listBuzzes(groupIds: string[]): Promise<Buzz[]>;
+
+  listRegalitos(groupIds: string[]): Promise<Regalito[]>;
+  createRegalito(groupId: string, bdayUser: string, year: number, budget: { amount: number; mode: 'ars' | 'usd' }): Promise<void>;
+  updateRegalito(id: string, patch: RegalitoPatch): Promise<void>;
+  addIdea(regalitoId: string, title: string, price: number): Promise<void>;
+  voteIdea(ideaId: string, on: boolean): Promise<void>;
+  voteBudget(regalitoId: string, yes: boolean): Promise<void>;
+  resetBudgetVotes(regalitoId: string): Promise<void>;
+  markRegalitoPaid(regalitoId: string, userId: string): Promise<void>;
+  savePushSubscription(sub: { endpoint: string; keys: unknown }): Promise<void>;
 
   subscribe(cb: () => void): () => void;
 }

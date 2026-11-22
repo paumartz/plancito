@@ -50,3 +50,18 @@ describe('votación', () => {
     expect(planSentence(a)).toBe(`Nos juntamos ${days[1].phrase} a las 21:00 en lo de Tomi a cenar. Cocinamos pastas caseras.`);
   });
 });
+
+import { adjustForInflation, daysToBirthday, majority, shareOf } from './regalito';
+describe('regalito', () => {
+  it('cuenta los días al próximo cumple, aunque sea el año que viene', () => {
+    expect(daysToBirthday('1996-12-04', new Date(2026, 10, 22))).toBe(12);
+    expect(daysToBirthday('1996-03-15', new Date(2026, 10, 22))).toBe(113);
+    expect(daysToBirthday('1996-11-22', new Date(2026, 10, 22))).toBe(0);
+  });
+  it('mayoría y vaquita', () => {
+    expect(majority(3)).toBe(2);
+    expect(majority(4)).toBe(3);
+    expect(shareOf(72000, 3)).toBe(24000);
+    expect(adjustForInflation(80000, 15)).toBe(92000);
+  });
+});

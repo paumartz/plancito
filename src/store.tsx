@@ -1,5 +1,7 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
-import { api, type Buzz, type Group, type Plan, type PointEntry, type Profile } from './data';
+import { api, type Buzz, type Group, type Plan, type PointEntry, type Profile, type Regalito } from './data';
+import { daysToBirthday } from './lib/logic/regalito';
+import { today } from './lib/logic/dates';
 import { playBuzz } from './components/fx';
 
 interface State {
@@ -10,6 +12,7 @@ interface State {
   plans: Plan[];
   points: PointEntry[];
   buzzes: Buzz[];
+  regalitos: Regalito[];
 }
 interface Store extends State {
   me: Profile | null;
@@ -28,7 +31,7 @@ const SEEN_KEY = 'plancito-zumbidos-vistos';
 const readSeen = (): string[] => { try { return JSON.parse(localStorage.getItem(SEEN_KEY) || '[]'); } catch { return []; } };
 
 export function StoreProvider({ children }: { children: ReactNode }) {
-  const [s, setS] = useState<State>({ ready: false, userId: null, profiles: {}, groups: [], plans: [], points: [], buzzes: [] });
+  const [s, setS] = useState<State>({ ready: false, userId: null, profiles: {}, groups: [], plans: [], points: [], buzzes: [], regalitos: [] });
   const [toastMsg, setToast] = useState<string | null>(null);
   const [seen, setSeen] = useState<string[]>(readSeen);
   const toastT = useRef<ReturnType<typeof setTimeout>>();
@@ -40,12 +43,27 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   const reload = useCallback(async () => {
     try {
       const userId = await api.currentUserId();
-      if (!userId) { setS({ ready: true, userId: null, profiles: {}, groups: [], plans: [], points: [], buzzes: [] }); return; }
+      if (!userId) { setS({ ready: true, userId: null, profiles: {}, groups: [], plans: [], points: [], buzzes: [], regalitos: [] }); return; }
       const groups = await api.listGroups();
       const ids = groups.map((g) => g.id);
       const people = [...new Set([userId, ...groups.flatMap((g) => g.members)])];
       const [profiles, plans, points, buzzes] = await Promise.all([api.getProfiles(people), api.listPlans(ids), api.listPoints(ids), api.listBuzzes(ids)]);
-      setS({ ready: true, userId, profiles, groups, plans, points, buzzes });
+      let regalitos = await api.listRegalitos(ids);
+      // Si se acerca el cumple de alguien (30 días) en un grupo con regalito, se arma solo.
+      // Lo arma cualquiera menos el cumpleañero, que nunca lo ve.
+      const t = today();
+      const toCreate = groups.filter((g) => g.regalitoOn).flatMap((g) => g.members.filter((m) => m !== userId && profiles[m]?.birthday)
+        .map((m) => ({ g, m, d: daysToBirthday(profiles[m].birthday!, t) }))
+        .filter(({ g, m, d }) => d <= 30 && !regalitos.some((r) => r.groupId === g.id && r.bdayUser === m && r.status !== 'entregado' && Date.now() - new Date(r.createdAt).getTime() < 200 * 864e5)));
+      if (toCreate.length) {
+        for (const { g, m, d } of toCreate) {
+          const year = new Date(t.getTime() + d * 864e5).getFullYear();
+          if (!regalitos.some((r) => r.groupId === g.id && r.bdayUser === m && r.year === year))
+            await api.createRegalito(g.id, m, year, { amount: g.budgetMode === 'usd' ? Math.round(g.budgetDefault / g.usdRate) : g.budgetDefault, mode: g.budgetMode }).catch(() => undefined);
+        }
+        regalitos = await api.listRegalitos(ids);
+      }
+      setS({ ready: true, userId, profiles, groups, plans, points, buzzes, regalitos });
     } catch (e) {
       console.error(e);
       toast('No pudimos cargar los datos. Revisá tu conexión.');

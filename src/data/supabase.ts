@@ -1,5 +1,5 @@
 import { createClient, type SupabaseClient } from '@supabase/supabase-js';
-import type { Api, Group, Plan, Profile } from './types';
+import type { Api, Group, Plan, Profile, Regalito } from './types';
 import { defaultAvatar } from '../components/avatarSvg';
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
@@ -7,10 +7,21 @@ const toGroup = (r: any): Group => ({
   id: r.id, name: r.name, kind: r.kind, icon: r.icon, photoUrl: r.photo_url,
   goal: { n: r.goal_n, per: r.goal_per }, inviteCode: r.invite_code, likes: r.likes || [], spots: r.spots || [],
   members: (r.group_members || []).map((m: any) => m.user_id), createdAt: r.created_at,
+  regalitoOn: !!r.regalito_on, budgetMode: r.budget_mode || 'ars', budgetDefault: Number(r.budget_default ?? 60000), usdRate: Number(r.usd_rate ?? 1450),
 });
 const toProfile = (r: any): Profile => ({
   id: r.id, name: r.name, nick: r.nick, alias: r.alias, bank: r.bank, birthday: r.birthday, barrio: r.barrio,
   avatar: Object.keys(r.avatar || {}).length ? r.avatar : defaultAvatar(), zumbido: r.zumbido,
+  wishlist: r.wishlist || [], askContact: r.ask_contact || {},
+});
+const toRegalito = (r: any): Regalito => ({
+  id: r.id, groupId: r.group_id, bdayUser: r.bday_user, year: r.year, owner: r.owner, status: r.status,
+  budget: { amount: Number(r.budget_amount), mode: r.budget_mode, since: r.budget_since },
+  proposal: r.proposal_amount ? { amount: Number(r.proposal_amount), pct: Number(r.proposal_pct || 0) } : null,
+  chosenIdea: r.chosen_idea, cost: r.cost == null ? null : Number(r.cost),
+  ideas: (r.regalito_ideas || []).map((i: any) => ({ id: i.id, title: i.title, price: Number(i.price), by: i.created_by, votes: (i.regalito_votes || []).map((v: any) => v.user_id) })),
+  budgetVotes: (r.regalito_budget_votes || []).map((v: any) => ({ userId: v.user_id, yes: v.yes })),
+  payments: (r.regalito_payments || []).map((x: any) => x.user_id), createdAt: r.created_at,
 });
 const toPlan = (r: any): Plan => {
   const ballots: Plan['ballots'] = { cuando: {}, donde: {} }, done: Plan['done'] = { cuando: [], donde: [] };
@@ -59,6 +70,7 @@ export function makeSupabaseApi(url: string, key: string): Api {
     async saveMe(patch) {
       const me = await uid();
       const row: any = { ...patch };
+      if ('askContact' in row) { row.ask_contact = row.askContact; delete row.askContact; }
       must(await sb.from('profiles').update(row).eq('id', me!));
     },
 
@@ -81,6 +93,10 @@ export function makeSupabaseApi(url: string, key: string): Api {
       if (patch.likes) row.likes = patch.likes;
       if (patch.spots) row.spots = patch.spots;
       if (patch.photoUrl !== undefined) row.photo_url = patch.photoUrl;
+      if (patch.regalitoOn !== undefined) row.regalito_on = patch.regalitoOn;
+      if (patch.budgetMode) row.budget_mode = patch.budgetMode;
+      if (patch.budgetDefault !== undefined) row.budget_default = patch.budgetDefault;
+      if (patch.usdRate !== undefined) row.usd_rate = patch.usdRate;
       must(await sb.from('groups').update(row).eq('id', id));
     },
     async groupPreview(code) {
@@ -131,6 +147,33 @@ export function makeSupabaseApi(url: string, key: string): Api {
       const since = new Date(Date.now() - 3 * 864e5).toISOString();
       const rows = must(await sb.from('buzzes').select('*').in('group_id', groupIds).gte('created_at', since)) as any[];
       return rows.map((r) => ({ id: String(r.id), groupId: r.group_id, from: r.from_user, style: r.style, msg: r.msg, createdAt: r.created_at }));
+    },
+
+    async listRegalitos(groupIds) {
+      if (!groupIds.length) return [];
+      const rows = must(await sb.from('regalitos').select('*, regalito_ideas(*, regalito_votes(user_id)), regalito_budget_votes(*), regalito_payments(*)').in('group_id', groupIds)) as any[];
+      return rows.map(toRegalito);
+    },
+    async createRegalito(groupId, bdayUser, year, budget) {
+      const r = await sb.from('regalitos').insert({ group_id: groupId, bday_user: bdayUser, year, budget_amount: budget.amount, budget_mode: budget.mode });
+      if (r.error && !/duplicate/i.test(r.error.message)) throw new Error(r.error.message);
+    },
+    async updateRegalito(id, patch) { must(await sb.from('regalitos').update(patch).eq('id', id)); },
+    async addIdea(rid, title, price) {
+      const i = must(await sb.from('regalito_ideas').insert({ regalito_id: rid, title, price }).select('id').single()) as any;
+      must(await sb.from('regalito_votes').insert({ idea_id: i.id }));
+    },
+    async voteIdea(ideaId, on) {
+      const me = await uid();
+      if (on) must(await sb.from('regalito_votes').upsert({ idea_id: ideaId, user_id: me }));
+      else must(await sb.from('regalito_votes').delete().eq('idea_id', ideaId).eq('user_id', me!));
+    },
+    async voteBudget(rid, yes) { must(await sb.from('regalito_budget_votes').insert({ regalito_id: rid, yes })); },
+    async resetBudgetVotes(rid) { must(await sb.rpc('reset_budget_votes', { r: rid })); },
+    async markRegalitoPaid(rid, userId) { must(await sb.from('regalito_payments').upsert({ regalito_id: rid, user_id: userId })); },
+    async savePushSubscription(sub) {
+      const me = await uid();
+      must(await sb.from('push_subscriptions').upsert({ endpoint: sub.endpoint, keys: sub.keys, user_id: me }));
     },
 
     subscribe(cb) {

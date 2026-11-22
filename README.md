@@ -19,7 +19,7 @@ Sin configurar Supabase corre en **modo local**: los datos quedan en el navegado
 
 ### 1. Supabase (base de datos y login)
 1. Creá un proyecto gratis en [supabase.com](https://supabase.com).
-2. En **SQL Editor → New query**, pegá el contenido de `supabase/migrations/0001_init.sql` y tocá **Run**.
+2. En **SQL Editor → New query**, pegá el contenido de `supabase/migrations/0001_init.sql` y tocá **Run**. Después hacé lo mismo con `supabase/migrations/0002_regalito_push.sql`.
 3. En **Authentication → URL Configuration**, poné como **Site URL** la dirección de Netlify (por ejemplo `https://plancito.netlify.app`) y agregala también en **Redirect URLs** como `https://plancito.netlify.app/**`.
 4. En **Project Settings → API** copiá la **Project URL** y la **anon public key**.
 
@@ -30,6 +30,24 @@ Sin configurar Supabase corre en **modo local**: los datos quedan en el navegado
    - `VITE_SUPABASE_URL` = la Project URL
    - `VITE_SUPABASE_ANON_KEY` = la anon public key
 4. Volvé a desplegar. Cada cambio que se suba a la rama publicada se despliega solo.
+
+### 3. Notificaciones push (zumbidos, recordatorios, deudas, cumples)
+Las mandan dos funciones de Netlify: `notify` (al instante, cuando pasa algo) y `reminders` (todos los días a las 9).
+1. Generá las claves en tu compu: `npx web-push generate-vapid-keys`.
+2. En Netlify → **Environment variables** agregá:
+   - `VITE_VAPID_PUBLIC_KEY` y `VAPID_PUBLIC_KEY` = la clave pública
+   - `VAPID_PRIVATE_KEY` = la clave privada
+   - `VAPID_SUBJECT` = `https://` + la dirección de tu sitio
+   - `SUPABASE_SERVICE_ROLE_KEY` = en Supabase, **Project Settings → API → service_role** (es secreta: solo va en Netlify, nunca en la app)
+   - `NOTIFY_SECRET` = una clave inventada larga (por ejemplo, 30 letras y números al azar)
+3. En Supabase → **SQL Editor**, conectá la base con la función (usá tu dirección y la misma clave secreta):
+   ```sql
+   update app_settings set value = 'https://TU-SITIO.netlify.app/.netlify/functions/notify' where key = 'notify_url';
+   update app_settings set value = 'LA-MISMA-CLAVE-DE-NOTIFY_SECRET' where key = 'notify_secret';
+   ```
+4. Volvé a desplegar en Netlify. Cada persona activa las notificaciones desde su **Perfil**.
+
+En iPhone las notificaciones funcionan solo si Plancito está agregado a la pantalla de inicio (Compartir → Agregar a inicio), con iOS 16.4 o más nuevo. En Android funcionan siempre y el zumbido vibra.
 
 ## Comandos
 - `npm run dev`: servidor local
@@ -46,7 +64,7 @@ npx cap sync
 ```
 Requiere cuenta de Apple Developer (USD 99/año) y de Google Play (USD 25, un pago).
 
-## Etapas
-1. **Etapa 1 (esta):** perfil y avatar, grupos con link de invitación, proponer y votar en dos rondas, plan definido con recordatorios y Google Calendar, me bajo, gastos con alias y "ya pagué", notificaciones con deudas primero, zumbidos, estrellitas y niveles.
-2. **Etapa 2:** regalito (cumpleaños, vaquita, lista de deseos), mapa con punto medio, notificaciones push.
-3. **Etapa 3:** presupuesto en dólares o ajustado por inflación, más personalización.
+## Qué hay
+Ya incluye: perfil y avatar, grupos con link de invitación, foto o ícono, gustos y lugares de siempre; proponer y votar en dos rondas; plan definido con recordatorios y Google Calendar; me bajo; gastos con alias y "ya pagué"; notificaciones con deudas primero; zumbidos; estrellitas y niveles; regalito (el cumpleañero no ve nada, lista de deseos o contacto, ideas con votación por mayoría, presupuesto en pesos con ajuste por inflación o en dólares, vaquita e historial); mapa con punto medio por barrio; notificaciones push.
+
+Pendiente: guardar las fotos de grupo en el almacenamiento de Supabase (hoy van chiquitas dentro de la base) y la versión descargable con Capacitor.

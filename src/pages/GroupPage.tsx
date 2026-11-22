@@ -9,6 +9,8 @@ import { activePlan, doneThisPeriod, goalTxt, nextPlan, overdue, pointsOf, since
 import { PLANES, planTitle } from '../lib/logic/plan';
 import { POINTS } from '../lib/logic/points';
 import { cap, fmtDay, iso, today } from '../lib/logic/dates';
+import RegalitoTab from './RegalitoTab';
+import PuntoMedio from '../components/PuntoMedio';
 
 export default function GroupPage({ onPropose }: { onPropose: (groupId: string) => void }) {
   const { id } = useParams();
@@ -16,7 +18,7 @@ export default function GroupPage({ onPropose }: { onPropose: (groupId: string) 
   const { plans, points, userId, profiles, nick, toast, reload } = st;
   const nav = useNavigate();
   const [params, setParams] = useSearchParams();
-  const [tab, setTab] = useState<'plancitos' | 'puntos' | 'ajustes'>('plancitos');
+  const [tab, setTab] = useState<'plancitos' | 'regalito' | 'puntos' | 'ajustes'>(params.get('tab') === 'regalito' ? 'regalito' : 'plancitos');
   const g = st.group(id!);
   const inviting = params.get('invitar') === '1';
 
@@ -48,7 +50,7 @@ export default function GroupPage({ onPropose }: { onPropose: (groupId: string) 
       <button className="btn sm ghost" onClick={() => setParams({ invitar: '1' })}>Invitar</button></div>} />
     <div className="row" style={{ gap: 14 }}><GroupPic g={g} size={60} /><div className="grow"><AvStack ids={g.members} size={34} />
       <p className="small muted" style={{ marginTop: 4 }}>{g.members.map(nick).join(', ')}</p></div></div>
-    <div className="tabs" role="tablist">{(['plancitos', 'puntos', 'ajustes'] as const).map((k) =>
+    <div className="tabs" role="tablist">{((g.kind === 'amigos' ? ['plancitos', 'regalito', 'puntos', 'ajustes'] : ['plancitos', 'puntos', 'ajustes']) as ('plancitos' | 'regalito' | 'puntos' | 'ajustes')[]).map((k) =>
       <button key={k} className={`tab ${tab === k ? 'on' : ''}`} onClick={() => setTab(k)}>{cap(k)}</button>)}</div>
 
     {tab === 'plancitos' && <>
@@ -68,7 +70,10 @@ export default function GroupPage({ onPropose }: { onPropose: (groupId: string) 
             <span className={`chip ${p.status === 'votando' ? 'warn' : p.status === 'definido' ? 'ok' : ''}`}>{p.status === 'votando' ? 'En votación' : p.status === 'definido' ? 'Confirmado' : 'Realizado'}</span></div>
           <p className="small muted">{p.date ? cap(fmtDay(p.date, { weekday: 'long', day: 'numeric', month: 'long' })) : `Propuesto por ${nick(p.createdBy)}`}</p>
         </button>)) : <div className="empty">Todavía no hicieron ningún plancito.</div>}
+      <section className="sec"><div className="sec-h"><h2>Punto de encuentro</h2><span className="small muted">a mitad de camino</span></div>
+        <PuntoMedio people={g.members.map((m) => profiles[m]).filter(Boolean)} /></section>
     </>}
+    {tab === 'regalito' && <RegalitoTab g={g} />}
 
     {tab === 'puntos' && <Ranking g={g} />}
     {tab === 'ajustes' && <Ajustes g={g} />}
@@ -125,6 +130,16 @@ function Ajustes({ g }: { g: Group }) {
         <select className="inp" aria-label="Cantidad" value={g.goal.n} onChange={(e) => save({ goal: { ...g.goal, n: Number(e.target.value) } })}>{[1, 2, 3, 4, 5, 6, 8, 10, 12].map((n) => <option key={n}>{n}</option>)}</select>
         <select className="inp" aria-label="Por" value={g.goal.per} onChange={(e) => save({ goal: { ...g.goal, per: e.target.value as 'mes' } })}>{['semana', 'mes', 'año'].map((x) => <option key={x}>{x}</option>)}</select>
       </div></div>
+    {g.kind === 'amigos' && <div className="card"><div className="row between"><div className="grow"><h3>Regalito</h3><p className="small muted">Avisos de cumple, vaquita y votación del regalo. El cumpleañero no ve nada.</p></div>
+      <button className={`btn sm ${g.regalitoOn ? '' : 'ghost'}`} onClick={() => save({ regalitoOn: !g.regalitoOn })}>{g.regalitoOn ? 'Activado' : 'Apagado'}</button></div>
+      {g.regalitoOn && <>
+        <div className="seg" role="group" aria-label="Moneda del presupuesto">{([['ars', 'Pesos + inflación'], ['usd', 'Dólares']] as const).map(([k, l]) =>
+          <button key={k} className={g.budgetMode === k ? 'on' : ''} onClick={() => save({ budgetMode: k })}>{l}</button>)}</div>
+        <div className="grid2">
+          <div className="field"><label htmlFor="bDef">Presupuesto por regalo (en pesos)</label><input id="bDef" className="inp num" inputMode="numeric" defaultValue={g.budgetDefault} onBlur={(e) => { const v = Number(e.target.value.replace(/[^\d]/g, '')); if (v && v !== g.budgetDefault) save({ budgetDefault: v }); }} /></div>
+          <div className="field"><label htmlFor="uRate">Cotización del dólar del grupo</label><input id="uRate" className="inp num" inputMode="numeric" defaultValue={g.usdRate} onBlur={(e) => { const v = Number(e.target.value.replace(/[^\d]/g, '')); if (v && v !== g.usdRate) save({ usdRate: v }); }} /></div>
+        </div></>}
+    </div>}
     <div className="card"><h3>Planes que les gustan</h3><p className="small muted">Aparecen primero cuando votan qué hacer.</p>
       <div className="row wrap" style={{ gap: 7 }}>{Object.entries(PLANES).map(([k, v]) => { const on = g.likes.includes(k);
         return <button key={k} className={on ? 'vchip on' : 'vchip'} onClick={() => save({ likes: on ? g.likes.filter((x) => x !== k) : [...g.likes, k] })}>{on ? '✓ ' : ''}{v.l}</button>; })}</div></div>

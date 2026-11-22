@@ -12,6 +12,7 @@ import {
 import { debtKey, settle } from '../lib/logic/split';
 import { POINTS } from '../lib/logic/points';
 import { fmtDay, iso, money, today } from '../lib/logic/dates';
+import PuntoMedio from '../components/PuntoMedio';
 
 export default function PlanPage() {
   const { id } = useParams();
@@ -160,6 +161,8 @@ function PlanView({ p, g }: { p: Plan; g: Group }) {
         <div className="row wrap">{att.map((x) => <div key={x} className="row" style={{ gap: 6 }}><Av p={st.profiles[x]} size={32} /><span className="small" style={{ fontWeight: 700 }}>{nick(x)}</span></div>)}</div>
         {p.out.length > 0 && <div className="list">{p.out.map((o) => <div key={o.who} className="li"><Av p={st.profiles[o.who]} size={32} /><div className="grow"><p className="small" style={{ fontWeight: 700 }}>{nick(o.who)} se bajó</p><p className="small muted">{o.why ? `“${o.why}”` : 'Sin justificar'}</p></div></div>)}</div>}
       </section>
+      {p.status === 'definido' && a.lugar && ['afuera', 'impro'].includes(a.lugar.id) && <section className="sec"><h2>¿Dónde exactamente?</h2>
+        <PuntoMedio people={att.map((x) => st.profiles[x]).filter(Boolean)} focus={({ cafe: 'cafés', cena: 'restos', almuerzo: 'restos', desayuno: 'cafés', birras: 'bares' } as Record<string, string>)[a.plan?.id || ''] || 'lugares'} /></section>}
       {p.status === 'definido' ? <>
         <div className="card tight"><div className="row between wrap"><h3>Recordatorios</h3><a className="btn sm" href={gcalUrl(a, g.name, link)} target="_blank" rel="noopener">{I.cal} Google Calendar</a></div>
           <p className="small muted">Te avisamos para que no tengas que acordarte.</p>

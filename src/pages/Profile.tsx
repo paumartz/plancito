@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import { enablePush, pushState, type PushState } from '../lib/push';
 import { api, type Profile as P } from '../data';
 import { useStore } from '../store';
 import { Svg, TopBar } from '../components/ui';
@@ -7,12 +8,16 @@ import { PIG, WINK, playBuzz } from '../components/fx';
 import { pointsOf } from '../lib/derive';
 import { LEVELS, POINTS, ZSTYLES, ZUNLOCK, levelOf } from '../lib/logic/points';
 
-const BARRIOS = ['Almagro', 'Balvanera', 'Belgrano', 'Boedo', 'Caballito', 'Chacarita', 'Colegiales', 'Flores', 'Núñez', 'Palermo', 'Recoleta', 'San Telmo', 'Villa Crespo', 'Villa Urquiza', 'Otro'];
+import { BARRIOS as BARRIO_MAP } from '../components/PuntoMedio';
+const BARRIOS = [...Object.keys(BARRIO_MAP).sort((a, b) => a.localeCompare(b, 'es')), 'Otro (fuera de CABA)'];
 const zIcon = (k: string, sz = 26) => k === 'chancho' ? PIG(sz) : k === 'guinos' ? WINK(sz) : `<span class="ico">${ZSTYLES.find((z) => z[0] === k)![2]}</span>`;
 
 export default function Profile() {
   const { me, userId, points, reload, toast } = useStore();
   const [tab, setTab] = useState('pelo');
+  const [push, setPush] = useState<PushState | null>(null);
+  const [wish, setWish] = useState('');
+  useEffect(() => { pushState().then(setPush).catch(() => setPush('unsupported')); }, []);
   if (!me || !userId) return null;
   const pts = pointsOf(points, userId), li = levelOf(pts), nx = LEVELS[li + 1];
   const pct = nx ? ((pts - LEVELS[li][0]) / (nx[0] - LEVELS[li][0])) * 100 : 100;
@@ -48,6 +53,34 @@ export default function Profile() {
           <option value="">Elegí</option>{BARRIOS.map((b) => <option key={b}>{b}</option>)}</select></div>
       </div>
       <p className="small muted" style={{ marginTop: -4 }}>Tu alias lo ven tus grupos para pagarte. Del lugar usamos solo el barrio, nunca tu dirección.</p>
+    </section>
+
+    <section className="sec"><h2>Notificaciones</h2>
+      <div className="card tight">
+        {push === 'on' ? <p className="small"><b>Activadas.</b> Te avisamos de zumbidos, plancitos nuevos, recordatorios, deudas y cumples.</p>
+          : push === 'needs-install' ? <p className="small">En iPhone, primero agregá Plancito a la pantalla de inicio (Compartir → Agregar a inicio) y abrilo desde ahí.</p>
+          : push === 'denied' ? <p className="small">Las bloqueaste en el navegador. Activalas desde los ajustes del navegador para este sitio.</p>
+          : push === 'not-configured' ? <p className="small muted">Las notificaciones todavía no están configuradas en el servidor.</p>
+          : push === 'unsupported' ? <p className="small muted">Este navegador no permite notificaciones.</p>
+          : <><p className="small">Activalas para que te lleguen los zumbidos, los recordatorios y los avisos de deudas aunque no tengas la app abierta.</p>
+            <button className="btn" onClick={() => enablePush().then(setPush).catch((e) => toast('No se pudo activar: ' + (e as Error).message))}>Activar notificaciones</button></>}
+      </div>
+    </section>
+
+    <section className="sec"><h2>Tu lista de deseos</h2><p className="small muted" style={{ marginTop: -6 }}>La ven tus grupos cuando se acerca tu cumple.</p>
+      <div className="card tight">{me.wishlist.length > 0 && <div className="list">{me.wishlist.map((w, i) => <div key={i} className="li"><span className="grow">{w}</span>
+        <button className="link small" onClick={() => save({ wishlist: me.wishlist.filter((_, j) => j !== i) })}>Quitar</button></div>)}</div>}
+        <div className="row"><input className="inp" value={wish} onChange={(e) => setWish(e.target.value)} placeholder="Algo que te gustaría…" />
+          <button className="btn soft" onClick={() => { if (wish.trim()) { save({ wishlist: [...me.wishlist, wish.trim()] }); setWish(''); } }}>Sumar</button></div></div>
+    </section>
+    <section className="sec"><h2>¿O que le pregunten a alguien?</h2><p className="small muted" style={{ marginTop: -6 }}>Si no tenés ganas de armar lista, dejá a alguien que sepa qué te gustaría. Lo ven solo cuando se organiza tu regalo.</p>
+      <div className="card tight">
+        <div className="grid2">
+          <div className="field"><label htmlFor="acName">Nombre</label><input id="acName" className="inp" defaultValue={me.askContact.name || ''} placeholder="Ej: Fran" onBlur={(e) => save({ askContact: { ...me.askContact, name: e.target.value.trim() } })} /></div>
+          <div className="field"><label htmlFor="acRel">Quién es</label><input id="acRel" className="inp" defaultValue={me.askContact.rel || ''} placeholder="Ej: Mi novio" onBlur={(e) => save({ askContact: { ...me.askContact, rel: e.target.value.trim() } })} /></div>
+        </div>
+        <div className="field"><label htmlFor="acPhone">WhatsApp</label><input id="acPhone" className="inp" inputMode="tel" defaultValue={me.askContact.phone || ''} placeholder="+54 9 11 ..." onBlur={(e) => save({ askContact: { ...me.askContact, phone: e.target.value.trim() } })} /></div>
+      </div>
     </section>
 
     <section className="sec"><div className="sec-h"><h2>Tu nivel: {LEVELS[li][1]}</h2></div>

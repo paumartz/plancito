@@ -10,12 +10,12 @@ import { cap, daysBetween, parseISO, today } from '../lib/logic/dates';
 
 export default function Home({ onPropose }: { onPropose: (groupId?: string) => void }) {
   const st = useStore();
-  const { me, userId, groups, plans, profiles, points, buzzes, nick } = st;
+  const { me, userId, groups, plans, profiles, points, buzzes, regalitos, nick } = st;
   const nav = useNavigate();
   const [showAll, setShowAll] = useState(false);
   if (!me || !userId) return null;
 
-  const items = notifications({ me: userId, groups, plans, buzzes, nick, seenBuzz: st.seenBuzz });
+  const items = notifications({ me: userId, groups, plans, regalitos, profiles, buzzes, nick, seenBuzz: st.seenBuzz });
   const pts = pointsOf(points, userId);
   const upcoming = plans.filter((p) => p.status === 'definido').sort((a, b) => (a.date! < b.date! ? -1 : 1));
   const voting = plans.filter((p) => p.status === 'votando');

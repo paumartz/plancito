@@ -73,6 +73,7 @@ document.addEventListener('click', (e) => { const t = e.target.closest?.('[data-
 export function playBuzz(o: { av: AvatarOpts; text: string; style: string; msg?: string; sound?: boolean }){
   const hard = o.style === 'terremoto';
   if (o.sound !== false) buzzSound();
+  try { navigator.vibrate?.([220, 90, 220, 90, 420]); } catch { /* sin vibración */ }
   const sh = document.querySelector('.shell');
   if (sh && !REDUCE){ sh.classList.remove('shaking','hard'); void sh.offsetWidth; sh.classList.add('shaking'); if (hard) sh.classList.add('hard'); setTimeout(() => sh.classList.remove('shaking','hard'), hard ? 1700 : 1100); }
   particles(ZPART[o.style], {dur:3000});
