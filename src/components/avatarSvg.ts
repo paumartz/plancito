@@ -1,13 +1,13 @@
 // @ts-nocheck — dibujo del avatar portado tal cual del prototipo (prototype/index.html)
 export interface AvatarOpts { pelo: string; colorPelo: string; cara: string; lentes: string; acc: string; mascota?: string; color: string }
 export const AV_OPTS = {
-  pelo:[['melena','Melena'],['rulos','Rulos'],['rulosLargos','Rulos largos'],['corto','Corto'],['rodetes','Rodetes'],['afro','Afro'],['largo','Largo'],['pelado','Pelado']],
-  colorPelo:[['ink','Negro'],['castano','Castaño'],['rubio','Rubio'],['linea','Solo línea']],
-  cara:[['feliz','Feliz'],['sonrisa','Sonrisa'],['guino','Guiño'],['sorpresa','Sorpresa'],['meh','Meh'],['dormido','Fiaca']],
+  pelo:[['melena','Melena'],['rulos','Rulos'],['rulosLargos','Rulos largos'],['corto','Corto'],['dosAguas','Dos aguas'],['mediaColita','Media colita'],['rodetes','Rodetes'],['afro','Afro'],['largo','Largo'],['pelado','Pelado']],
+  colorPelo:[['ink','Negro'],['castano','Castaño'],['rubio','Rubio'],['rojo','Colorado'],['linea','Solo línea']],
+  cara:[['feliz','Feliz'],['sonrisa','Sonrisa'],['guino','Guiño'],['sorpresa','Sorpresa'],['meh','Meh'],['dormido','Fiaca'],['lengua','Lengua afuera'],['ojosBlanco','Ojos en blanco']],
   lentes:[['no','Sin lentes'],['redondos','Redondos'],['cuadrados','Cuadrados'],['sol','De sol']],
-  acc:[['nada','Nada'],['flor','Flor'],['gorrito','Gorrito'],['gorra','Gorra'],['auris','Auris'],['aro','Aro'],['bigote','Bigote'],['mate','Mate'],['camara','Cámara']],
+  acc:[['nada','Nada'],['flor','Flor'],['gorrito','Gorrito'],['gorra','Gorra'],['auris','Auris'],['aro','Aro'],['bigote','Bigote'],['mono','Moño'],['corona','Corona'],['mate','Mate'],['camara','Cámara']],
   mascota:[['nada','Ninguna'],['planta','Planta'],['gato','Gato'],['perro','Perro']],
-  color:[['sunset','Atardecer'],['mint','Menta'],['berry','Frutilla'],['sky','Cielo'],['citrus','Limón']],
+  color:[['sunset','Atardecer'],['mint','Menta'],['berry','Frutilla'],['sky','Cielo'],['citrus','Limón'],['musgo','Verde musgo'],['rojo','Rojo'],['bordo','Bordó'],['celeste','Celeste']],
 };
 export const AV_TABS = [['pelo','Pelo'],['colorPelo','Color de pelo'],['cara','Expresión'],['lentes','Lentes'],['acc','Accesorio'],['mascota','Mascota'],['color','Remera']];
 export const TEMPLATES: AvatarOpts[] = [
@@ -20,8 +20,8 @@ export const TEMPLATES: AvatarOpts[] = [
   {pelo:'pelado',colorPelo:'ink',cara:'sonrisa',lentes:'sol',acc:'bigote',color:'mint'},
   {pelo:'corto',colorPelo:'ink',cara:'feliz',lentes:'no',acc:'gorra',color:'sky'},
 ];
-const GRADS = { sunset:['#FF8A5B','#F7A8C4','#B79CFF'], mint:['#B6E89C','#FBE38A','#A6CFF0'], berry:['#F26D7D','#F7B7C8','#FFD3A5'], sky:['#94C3F0','#C9B8F5','#F7C5DA'], citrus:['#FFD166','#FFB38A','#C3EC9C'] };
-const HAIR = { ink:'#241B19', castano:'#6B3F2A', rubio:'#E2B256', linea:'#FFFDF9' };
+const GRADS = { sunset:['#FF8A5B','#F7A8C4','#B79CFF'], mint:['#B6E89C','#FBE38A','#A6CFF0'], berry:['#F26D7D','#F7B7C8','#FFD3A5'], sky:['#94C3F0','#C9B8F5','#F7C5DA'], citrus:['#FFD166','#FFB38A','#C3EC9C'], musgo:['#7C8B4F','#9AAA6A','#B6C38A'], rojo:['#D7362B','#E8573A','#F07A62'], bordo:['#6E1B2F','#8E2740','#A93A55'], celeste:['#8FD3F4','#A9DFF7','#CBEBFA'] };
+const HAIR = { ink:'#241B19', castano:'#6B3F2A', rubio:'#E2B256', rojo:'#C4532A', linea:'#FFFDF9' };
 let avN = 0;
 export function avatar(a, size=48, o={}){
   const id = (o.pfx || 'av') + (++avN), g = GRADS[a.color] || GRADS.sunset, hc = HAIR[a.colorPelo] || HAIR.ink, K = '#2A1F1D';
@@ -34,6 +34,13 @@ export function avatar(a, size=48, o={}){
     case 'melena': back = `<path d="M28 48 C26 30 38 22 50 22 C63 22 74 30 72 48 L73 64 C66 66 62 62 62 58 L38 58 C38 62 34 66 27 64 Z" ${hs}/>`; front = fringe; break;
     case 'largo': back = `<path d="M28 46 C26 28 40 21 50 21 C62 21 75 28 72 46 L76 80 C66 84 34 84 24 80 Z" ${hs}/>`; front = fringe; break;
     case 'corto': front = short; break;
+    // Corte "dos aguas": raya al medio y dos ondas cortas hacia los costados.
+    case 'dosAguas': front = `<path d="M30 46 C27 31 38 23 50 24 C46 29 40 34 33 46 Z" ${hs}/><path d="M70 46 C73 31 62 23 50 24 C54 29 60 34 67 46 Z" ${hs}/><path d="M50 24 L50 30" ${L} stroke-width="1.6"/>`; break;
+    // Media colita: pelo suelto hasta los hombros y una colita arriba atrás.
+    case 'mediaColita':
+      back = `<path d="M28 48 C26 30 38 22 50 22 C63 22 74 30 72 48 L73 68 C66 70 62 66 62 60 L38 60 C38 66 34 70 27 68 Z" ${hs}/>`
+        + `<path d="M58 20 C66 10 78 12 80 20 C76 18 70 20 66 24 Z" ${hs}/><circle cx="58" cy="21" r="3.2" fill="#F6B5C6" stroke="${K}" stroke-width="1.6"/>`;
+      front = `<path d="M31 45 C33 31 44 26 52 27 C61 27 69 34 69 45 C64 37 57 33 50 33 C43 33 36 38 31 45Z" ${hs}/>`; break;
     case 'rodetes': back = `<circle cx="33" cy="27" r="7" ${hs}/><circle cx="67" cy="27" r="7" ${hs}/>`; front = short; break;
     case 'afro': back = `<path d="M25 54 C16 46 19 31 28 28 C28 17 42 12 50 16 C58 11 72 16 72 27 C82 30 85 46 75 54 Z" ${hs}/>`; break;
     case 'rulosLargos':
@@ -49,6 +56,8 @@ export function avatar(a, size=48, o={}){
     guino:`<circle cx="43" cy="47" r="1.9" fill="${K}"/><path d="M54 47.5 q3 -2.6 6 0" ${L}/><path d="M45 55 q5 4.5 10 0" ${L}/>`,
     sorpresa:`<circle cx="43" cy="47" r="1.9" fill="${K}"/><circle cx="57" cy="47" r="1.9" fill="${K}"/><ellipse cx="50" cy="57" rx="2.4" ry="3" ${L}/>`,
     meh:`<circle cx="43" cy="47" r="1.9" fill="${K}"/><circle cx="57" cy="47" r="1.9" fill="${K}"/><path d="M46 57 h8" ${L}/>`,
+    lengua:`<path d="M40 47 q3.2 3 6.4 0 M53.6 47 q3.2 3 6.4 0" ${L}/><path d="M44 54.5 q6 4 12 0" ${L}/><path d="M47.5 56.2 q2.5 6 5 0" fill="#F48FA3" stroke="${K}" stroke-width="1.8" stroke-linejoin="round"/>`,
+    ojosBlanco:`<circle cx="43" cy="47" r="3.6" fill="#FFFFFF" stroke="${K}" stroke-width="1.8"/><circle cx="57" cy="47" r="3.6" fill="#FFFFFF" stroke="${K}" stroke-width="1.8"/><circle cx="43.6" cy="44.6" r="1.5" fill="${K}"/><circle cx="57.6" cy="44.6" r="1.5" fill="${K}"/><path d="M46 57 q4 -1.5 8 0" ${L}/>`,
     dormido:`<path d="M40 47.5 q3.2 2.6 6.4 0 M53.6 47.5 q3.2 2.6 6.4 0 M41 49 l-1.4 1.6 M43.2 50 l-.4 2 M56.8 50 l.4 2 M59 49 l1.4 1.6" ${L} stroke-width="1.6"/><path d="M47 56 q3 2 6 0" ${L}/>`,
   };
   const glasses = {
@@ -66,6 +75,8 @@ export function avatar(a, size=48, o={}){
     aro:`<circle cx="30.5" cy="57" r="2.6" fill="none" stroke="#D99A2B" stroke-width="2"/>`,
     mate:`<g transform="translate(22 88)"><path d="M5 -13 L10 -26" stroke="#9AA3AD" stroke-width="2.4" stroke-linecap="round"/><path d="M-6.5 -12 C-10 -3 -7 7 0 8.5 C7 7 10 -3 6.5 -12 Z" fill="#C98B5B" stroke="${K}" stroke-width="2" stroke-linejoin="round"/><ellipse cx="0" cy="-12" rx="6.5" ry="2.2" fill="#8DBE6A" stroke="${K}" stroke-width="1.6"/><circle cx="8.5" cy="1" r="3.8" fill="#FFFDF9" stroke="${K}" stroke-width="1.6"/></g>`,
     camara:`<g><circle cx="31" cy="56" r="4.2" fill="#FFFDF9" stroke="${K}" stroke-width="1.8"/><circle cx="69" cy="56" r="4.2" fill="#FFFDF9" stroke="${K}" stroke-width="1.8"/><rect x="37" y="35.5" width="8" height="5" rx="1.2" fill="#BCD7EA" stroke="${K}" stroke-width="1.8"/><rect x="32" y="39" width="36" height="19" rx="4" fill="#BCD7EA" stroke="${K}" stroke-width="2"/><circle cx="51" cy="48.5" r="7.2" fill="#FFFDF9" stroke="${K}" stroke-width="2"/><circle cx="51" cy="48.5" r="3.8" fill="${K}"/><circle cx="52.4" cy="47.1" r="1.1" fill="#FFFDF9"/><circle cx="62.5" cy="43" r="1.5" fill="#E8573A"/></g>`,
+    mono:`<g transform="translate(64 27) rotate(18)"><path d="M0 0 C-4 -7 -13 -7 -13 0 C-13 7 -4 7 0 0 Z M0 0 C4 -7 13 -7 13 0 C13 7 4 7 0 0 Z" fill="#F6B5C6" stroke="${K}" stroke-width="1.8" stroke-linejoin="round"/><circle r="2.8" fill="#F48FA3" stroke="${K}" stroke-width="1.6"/></g>`,
+    corona:`<path d="M36 28 L38 15 L44 22 L50 12 L56 22 L62 15 L64 28 Z" fill="#FFD166" stroke="${K}" stroke-width="2" stroke-linejoin="round"/><circle cx="50" cy="21" r="1.8" fill="#E8573A"/><circle cx="43" cy="24" r="1.3" fill="#7CC4F2"/><circle cx="57" cy="24" r="1.3" fill="#7CC4F2"/>`,
     bigote:`<path d="M42 53.5 C46 50.5 49 52.5 50 53.5 C51 52.5 54 50.5 58 53.5 C54 55.6 52 54.8 50 54.8 C48 54.8 46 55.6 42 53.5Z" fill="${K}"/>`,
   };
   const pets = {
