@@ -21,14 +21,14 @@ Sin configurar Supabase corre en **modo local**: los datos quedan en el navegado
 1. Creá un proyecto gratis en [supabase.com](https://supabase.com).
 2. En **SQL Editor → New query**, pegá el contenido de `supabase/migrations/0001_init.sql` y tocá **Run**. Después hacé lo mismo con `supabase/migrations/0002_regalito_push.sql`.
 3. En **Authentication → URL Configuration**, poné como **Site URL** la dirección de Netlify (por ejemplo `https://plancito.netlify.app`) y agregala también en **Redirect URLs** como `https://plancito.netlify.app/**`.
-4. En **Project Settings → API** copiá la **Project URL** y la **anon public key**.
+4. Copiá la **Project URL** (Project Settings → Data API, tiene la forma `https://xxxx.supabase.co`) y la **Publishable key** (Project Settings → API Keys, empieza con `sb_publishable_`; en proyectos viejos se llama *anon key*).
 
 ### 2. Netlify (publicación)
 1. En [netlify.com](https://netlify.com): **Add new site → Import an existing project → GitHub** y elegí este repo.
 2. La configuración de build ya está en `netlify.toml` (`npm run build`, carpeta `dist`).
 3. En **Site configuration → Environment variables** agregá:
    - `VITE_SUPABASE_URL` = la Project URL
-   - `VITE_SUPABASE_ANON_KEY` = la anon public key
+   - `VITE_SUPABASE_ANON_KEY` = la Publishable key (`sb_publishable_...`)
 4. Volvé a desplegar. Cada cambio que se suba a la rama publicada se despliega solo.
 
 ### 3. Notificaciones push (zumbidos, recordatorios, deudas, cumples)
@@ -38,7 +38,7 @@ Las mandan dos funciones de Netlify: `notify` (al instante, cuando pasa algo) y 
    - `VITE_VAPID_PUBLIC_KEY` y `VAPID_PUBLIC_KEY` = la clave pública
    - `VAPID_PRIVATE_KEY` = la clave privada
    - `VAPID_SUBJECT` = `https://` + la dirección de tu sitio
-   - `SUPABASE_SERVICE_ROLE_KEY` = en Supabase, **Project Settings → API → service_role** (es secreta: solo va en Netlify, nunca en la app)
+   - `SUPABASE_SERVICE_ROLE_KEY` = en Supabase, **Project Settings → API Keys → Secret key** (`sb_secret_...`; en proyectos viejos, *service_role*). Es secreta: solo va en Netlify, nunca en la app ni en un chat
    - `NOTIFY_SECRET` = una clave inventada larga (por ejemplo, 30 letras y números al azar)
 3. En Supabase → **SQL Editor**, conectá la base con la función (usá tu dirección y la misma clave secreta):
    ```sql
