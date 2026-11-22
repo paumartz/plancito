@@ -20,6 +20,8 @@ export const cap = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
 
 export interface DayOption { id: string; date: string; label: string; phrase: string }
 
+export const dayOption = (s: string): DayOption => ({ id: s, date: s, label: cap(fmtDay(s)), phrase: 'el ' + fmtDay(s, { weekday: 'long', day: 'numeric' }) });
+
 /** Próximos viernes, sábados y domingos a partir de mañana. */
 export function upcomingDays(from: Date = today(), n = 5): DayOption[] {
   const out: DayOption[] = [];

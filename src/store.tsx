@@ -1,5 +1,5 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
-import { api, type Buzz, type Group, type Plan, type PointEntry, type Profile, type Regalito } from './data';
+import { api, type Buzz, type Group, type Note, type Plan, type PointEntry, type Profile, type Regalito } from './data';
 import { daysToBirthday } from './lib/logic/regalito';
 import { today } from './lib/logic/dates';
 import { playBuzz } from './components/fx';
@@ -14,6 +14,7 @@ interface State {
   points: PointEntry[];
   buzzes: Buzz[];
   regalitos: Regalito[];
+  notes: Note[];
 }
 interface Store extends State {
   me: Profile | null;
@@ -35,7 +36,7 @@ const SEEN_KEY = 'plancito-zumbidos-vistos';
 const readSeen = (): string[] => { try { return JSON.parse(localStorage.getItem(SEEN_KEY) || '[]'); } catch { return []; } };
 
 export function StoreProvider({ children }: { children: ReactNode }) {
-  const [s, setS] = useState<State>({ ready: false, userId: null, profiles: {}, groups: [], plans: [], points: [], buzzes: [], regalitos: [] });
+  const [s, setS] = useState<State>({ ready: false, userId: null, profiles: {}, groups: [], plans: [], points: [], buzzes: [], regalitos: [], notes: [] });
   const [toastMsg, setToast] = useState<string | null>(null);
   const [seen, setSeen] = useState<string[]>(readSeen);
   const toastT = useRef<ReturnType<typeof setTimeout>>();
@@ -50,11 +51,12 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   const reload = useCallback(async () => {
     try {
       const userId = await api.currentUserId();
-      if (!userId) { setS({ ready: true, userId: null, profiles: {}, groups: [], plans: [], points: [], buzzes: [], regalitos: [] }); return; }
+      if (!userId) { setS({ ready: true, userId: null, profiles: {}, groups: [], plans: [], points: [], buzzes: [], regalitos: [], notes: [] }); return; }
       const groups = await api.listGroups();
       const ids = groups.map((g) => g.id);
       const people = [...new Set([userId, ...groups.flatMap((g) => g.members)])];
       const [profiles, plans, points, buzzes] = await Promise.all([api.getProfiles(people), api.listPlans(ids), api.listPoints(ids), api.listBuzzes(ids)]);
+      const notes = await api.listNotes(ids).catch(() => [] as Note[]);
       let regalitos = await api.listRegalitos(ids);
       // Si se acerca el cumple de alguien (30 días) en un grupo con regalito, se arma solo.
       // Lo arma cualquiera menos el cumpleañero, que nunca lo ve.
@@ -70,7 +72,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         }
         regalitos = await api.listRegalitos(ids);
       }
-      setS({ ready: true, userId, profiles, groups, plans, points, buzzes, regalitos });
+      setS({ ready: true, userId, profiles, groups, plans, points, buzzes, regalitos, notes });
     } catch (e) {
       console.error(e);
       const msg = (e as Error).message || String(e);

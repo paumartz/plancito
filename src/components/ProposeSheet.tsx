@@ -2,23 +2,26 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { api } from '../data';
 import { useStore } from '../store';
-import { upcomingDays } from '../lib/logic/dates';
+import { dayOption, upcomingDays } from '../lib/logic/dates';
+import MiniCalendar from './MiniCalendar';
 import { MOMENTOS, PLANES, planesFor, shareText as buildShare, slotId, type MomentoId, type Proposed } from '../lib/logic/plan';
-import { activePlan } from '../lib/derive';
+import { activePlan, awayByDay } from '../lib/derive';
 import { I, Sheet, copyText, shareText } from './ui';
 
 export default function ProposeSheet({ groupId, onClose }: { groupId: string | null; onClose: () => void }) {
-  const { groups, plans, toast, reload, nick, userId } = useStore();
+  const { groups, plans, toast, reload, nick, userId, notes } = useStore();
   const nav = useNavigate();
   const [gid, setGid] = useState(groupId || groups[0]?.id);
   const [vibe, setVibe] = useState<'concreto' | 'vago' | 'nada'>('vago');
   const [momento, setMomento] = useState<MomentoId>('noche');
   const [plan, setPlan] = useState<string | null>(null);
   const [dia, setDia] = useState<string | null>(null);
+  const [sel, setSel] = useState<string[]>([]);
   const [created, setCreated] = useState<{ id: string; text: string } | null>(null);
   const [busy, setBusy] = useState(false);
-  const days = upcomingDays();
+  const nextWeekends = upcomingDays(undefined, 6).map((d) => d.id);
   const g = groups.find((x) => x.id === gid);
+  const awayMarks = gid ? awayByDay(notes, gid, nick) : {};
 
   if (!groups.length) return (
     <Sheet onClose={onClose}>
@@ -35,11 +38,14 @@ export default function ProposeSheet({ groupId, onClose }: { groupId: string | n
     try {
       const proposed: Proposed = {};
       if (vibe !== 'nada') { proposed.momento = momento; if (plan) proposed.plan = plan; }
+      if (vibe === 'concreto' && !dia) { toast('Elegí el día en el calendario'); setBusy(false); return; }
       if (vibe === 'concreto' && dia) proposed.dia = dia;
+      // Días a votar: el propuesto y los próximos fines de semana, o los que se eligieron en el calendario.
+      proposed.days = vibe === 'concreto' ? [...new Set([dia!, ...nextWeekends.slice(0, 4)])].sort() : (sel.length ? [...sel].sort() : nextWeekends);
       const id = await api.createPlan(g.id, proposed);
       if (proposed.dia && proposed.momento) await api.saveBallot(id, 'cuando', { slots: [slotId(proposed.dia, proposed.momento)] }, true);
       await reload();
-      setCreated({ id, text: buildShare(proposed, `${location.origin}/i/${g.inviteCode}?p=${id}`, days, g.kind === 'pareja' || g.members.length === 2 ? 1 : 2) });
+      setCreated({ id, text: buildShare(proposed, `${location.origin}/i/${g.inviteCode}?p=${id}`, proposed.days.map(dayOption), g.kind === 'pareja' || g.members.length === 2 ? 1 : 2) });
     } catch (e) {
       toast('No se pudo crear el plancito: ' + (e as Error).message);
     } finally { setBusy(false); }
@@ -80,9 +86,11 @@ export default function ProposeSheet({ groupId, onClose }: { groupId: string | n
             <button key={k} className={plan === k ? 'vchip on' : 'vchip'} onClick={() => setPlan(plan === k ? null : k)}>{PLANES[k].l}{g?.likes.includes(k) ? ' ★' : ''}</button>)}</div>
         </div>
       </>}
-      {vibe === 'concreto' && <div className="field"><label>¿Qué día?</label>
-        <div className="grid2">{days.map((d) => <button key={d.id} className={pick(dia === d.id)} onClick={() => setDia(d.id)}>{d.label}</button>)}</div>
-      </div>}
+      {vibe === 'concreto' ? <div className="field"><label>¿Qué día?</label>
+        <MiniCalendar multi={false} selected={dia ? [dia] : []} onToggle={(d) => setDia(dia === d ? null : d)} marks={awayMarks} /></div>
+      : <details className="field"><summary style={{ fontWeight: 700, fontSize: 13, color: 'var(--ink-2)', cursor: 'pointer' }}>¿Qué días se pueden votar? {sel.length ? `(${sel.length} elegidos)` : '(opcional)'}</summary>
+        <div style={{ marginTop: 8 }}><MiniCalendar selected={sel} onToggle={(d) => setSel(sel.includes(d) ? sel.filter((x) => x !== d) : [...sel, d])} marks={awayMarks} /></div>
+        {!sel.length && <p className="small muted">Si no elegís, se votan los próximos fines de semana.</p>}</details>}
       <p className="small muted">{vibe === 'concreto' ? 'Tus amigos lo aceptan con un toque, o marcan otro horario.' : vibe === 'vago' ? 'Cada uno marca qué días puede. Qué hacemos y dónde se elige cuando ya está el día.' : 'Cada uno marca cuándo puede. Cuando está el día, eligen qué hacer y dónde.'}</p>
       <button className="btn tomato full" disabled={busy} onClick={create}>{busy ? 'Creando…' : 'Proponer'}</button>
     </Sheet>

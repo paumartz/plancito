@@ -95,7 +95,7 @@ export interface Answer { id: string; label: string; phrase: string; date?: stri
 export interface Answers {
   dia?: Answer; momento?: Answer; plan?: Answer; hora?: Answer; lugar?: Answer; host?: Answer; menu?: Answer; cocina?: Answer;
 }
-export interface Proposed { momento?: MomentoId; plan?: string; dia?: string }
+export interface Proposed { momento?: MomentoId; plan?: string; dia?: string; /** días que se ponen a votación */ days?: string[] }
 
 export function leadPlan(likes: string[], answers: Answers, ballots: Ballots, proposed: Proposed = {}) {
   const ids = planesFor(likes, answers.momento!.id);

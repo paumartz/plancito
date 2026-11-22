@@ -1,6 +1,6 @@
 // Modo local: sin Supabase configurado, todo se guarda en el navegador.
 // Sirve para probar la app sola; para usarla con amigos hace falta Supabase.
-import type { Api, Buzz, Group, Plan, PointEntry, Profile, Regalito } from './types';
+import type { Api, Buzz, Group, Note, Plan, PointEntry, Profile, Regalito } from './types';
 import { defaultAvatar } from '../components/avatarSvg';
 
 interface DB {
@@ -11,6 +11,7 @@ interface DB {
   points: PointEntry[];
   buzzes: Buzz[];
   regalitos: Regalito[];
+  notes?: Note[];
 }
 const KEY = 'plancito-local-v1';
 const uid = () => Math.random().toString(36).slice(2, 10) + Date.now().toString(36).slice(-4);
@@ -102,6 +103,9 @@ export const localApi: Api = {
   async sendBuzz(groupId, style, msg) { db.buzzes.push({ id: uid(), groupId, from: me(), style, msg, createdAt: now() }); save(); },
   async listBuzzes(groupIds) { return db.buzzes.filter((b) => groupIds.includes(b.groupId)); },
 
+  async listNotes(groupIds) { return (db.notes || []).filter((n) => groupIds.includes(n.groupId)); },
+  async addNote(n) { (db.notes ||= []).push({ ...n, id: uid(), author: me(), createdAt: now() }); save(); },
+  async deleteNote(id) { db.notes = (db.notes || []).filter((n) => n.id !== id); save(); },
   async listRegalitos(groupIds) { db.regalitos ||= []; return db.regalitos.filter((r) => groupIds.includes(r.groupId) && r.bdayUser !== me()); },
   async createRegalito(groupId, bdayUser, year, budget) {
     db.regalitos ||= [];

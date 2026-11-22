@@ -309,3 +309,14 @@ input[type="date"].inp{display:block;width:100%;min-width:0;-webkit-appearance:n
 .hornpulse{animation:horn .18s ease-in-out 8 alternate}
 @keyframes horn{from{transform:scale(1)}to{transform:scale(1.12) rotate(-4deg)}}
 @media (prefers-reduced-motion:reduce){.gun,.ojota,.paloma,.grillo,.ghostfloat,.hornpulse{animation:none!important}}
+
+.mcal{display:flex;flex-direction:column;gap:8px;background:var(--card);border:1.5px solid var(--line);border-radius:18px;padding:12px}
+.mcal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:4px}
+.mcal-h{font-size:11px;font-weight:800;color:var(--ink-2);text-align:center;padding-bottom:2px}
+.mcal-d{aspect-ratio:1;border:0;border-radius:10px;background:transparent;font-weight:700;font-size:14px;color:var(--ink);position:relative}
+.mcal-d.we{background:color-mix(in srgb, var(--peach) 30%, transparent)}
+.mcal-d.on{background:var(--ink);color:var(--paper)}
+.mcal-d:disabled{opacity:.28}
+.mcal-d.mk::after{content:"";position:absolute;left:50%;bottom:3px;width:5px;height:5px;border-radius:50%;background:var(--tomato);transform:translateX(-50%)}
+.slotgrid .d{flex-direction:column;align-items:flex-start;justify-content:center}
+.away{display:block;font-size:10px;font-weight:700;color:var(--tomato);white-space:normal;line-height:1.1;max-width:80px}

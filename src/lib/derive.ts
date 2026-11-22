@@ -1,7 +1,7 @@
 // Cálculos que dependen de los datos cargados (grupos, plancitos, deudas, notificaciones).
-import type { Group, Plan, PointEntry, Profile, Regalito } from '../data';
+import type { Group, Note, Plan, PointEntry, Profile, Regalito } from '../data';
 import { daysToBirthday, majority, shareOf } from './logic/regalito';
-import { daysBetween, iso, parseISO, today, upcomingDays } from './logic/dates';
+import { dayOption, daysBetween, iso, parseISO, today, upcomingDays } from './logic/dates';
 import { emptyBallot, planTitle, slotId, type Ballots } from './logic/plan';
 import { debtKey, settle } from './logic/split';
 import { levelOf } from './logic/points';
@@ -17,7 +17,7 @@ export function effDone(p: Plan, round: 'cuando' | 'donde'): string[] {
   return covers(p, round) && !p.done[round].includes(p.createdBy) ? [...p.done[round], p.createdBy] : p.done[round];
 }
 export const attendees = (g: Group, p: Plan) => { const out = new Set(p.out.map((o) => o.who)); return g.members.filter((m) => !out.has(m)); };
-export const planDays = (p: Plan) => upcomingDays(parseISO(p.createdAt.slice(0, 10)));
+export const planDays = (p: Plan) => p.proposed?.days?.length ? [...p.proposed.days].sort().map(dayOption) : upcomingDays(parseISO(p.createdAt.slice(0, 10)));
 export const goalTxt = (g: Group) => `${g.goal.n} ${g.goal.n === 1 ? 'vez' : 'veces'} por ${g.goal.per}`;
 const PER = { semana: 7, mes: 30, 'año': 365 } as const;
 
@@ -89,4 +89,20 @@ export function notifications(o: { me: string; groups: Group[]; plans: Plan[]; r
   for (const b of o.buzzes.filter((x) => x.from !== me && !o.seenBuzz(x.id)))
     out.push({ pr: 3, tone: 'var(--sky)', who: b.from, title: `${nick(b.from)} te mandó un zumbido`, sub: `${groups.find((g) => g.id === b.groupId)?.name ?? ''}${b.msg ? ` · “${b.msg}”` : ''}`, cta: 'Ver', buzzId: b.id });
   return out.map((n, i) => ({ ...n, i })).sort((a, b) => a.pr - b.pr || a.i - b.i);
+}
+
+/** Avisos que siguen vigentes (los que tienen fecha se ocultan cuando ya pasaron). */
+export function activeNotes(notes: Note[], groupId: string) {
+  const t = iso(today());
+  return notes.filter((n) => n.groupId === groupId && !((n.to || n.from) && (n.to || n.from)! < t))
+    .sort((a, b) => ((a.from || '9999') + a.createdAt).localeCompare((b.from || '9999') + b.createdAt));
+}
+/** Para cada día, quiénes avisaron que no están (vacaciones, etc.). */
+export function awayByDay(notes: Note[], groupId: string, nick: (id: string) => string): Record<string, string> {
+  const out: Record<string, string[]> = {};
+  for (const n of notes.filter((x) => x.groupId === groupId && x.kind === 'no-estoy' && x.from)) {
+    const d = parseISO(n.from!), end = parseISO(n.to || n.from!);
+    for (let i = 0; d <= end && i < 120; i++, d.setDate(d.getDate() + 1)) (out[iso(d)] ||= []).push(nick(n.author));
+  }
+  return Object.fromEntries(Object.entries(out).map(([k, v]) => [k, 'No está: ' + [...new Set(v)].join(', ')]));
 }

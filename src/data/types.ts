@@ -59,6 +59,9 @@ export interface Plan {
 export interface PointEntry { userId: string; groupId: string; kind: string; pts: number; createdAt: string }
 export interface Buzz { id: string; groupId: string; from: string; style: string; msg?: string | null; createdAt: string }
 
+export type NoteKind = 'no-estoy' | 'recomendacion' | 'fecha' | 'otro';
+export interface Note { id: string; groupId: string; author: string; kind: NoteKind; text: string; from?: string | null; to?: string | null; createdAt: string }
+
 export type RegalitoStatus = 'votando' | 'aprobado' | 'comprado' | 'entregado';
 export interface Regalito {
   id: string;
@@ -114,6 +117,10 @@ export interface Api {
   addPoints(entries: Omit<PointEntry, 'createdAt'>[]): Promise<void>;
   sendBuzz(groupId: string, style: string, msg: string): Promise<void>;
   listBuzzes(groupIds: string[]): Promise<Buzz[]>;
+
+  listNotes(groupIds: string[]): Promise<Note[]>;
+  addNote(n: Omit<Note, 'id' | 'author' | 'createdAt'>): Promise<void>;
+  deleteNote(id: string): Promise<void>;
 
   listRegalitos(groupIds: string[]): Promise<Regalito[]>;
   createRegalito(groupId: string, bdayUser: string, year: number, budget: { amount: number; mode: 'ars' | 'usd' }): Promise<void>;

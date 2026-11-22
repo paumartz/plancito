@@ -5,6 +5,7 @@ import { useStore } from '../store';
 import { Av, AvStack, GroupPic, I, Sheet, Svg, TopBar, copyText, shareText } from '../components/ui';
 import { playBuzz } from '../components/fx';
 import GroupImageEditor from '../components/GroupImageEditor';
+import NotesBoard from '../components/NotesBoard';
 import { activePlan, doneThisPeriod, goalTxt, hasDonePlan, nextPlan, overdue, pointsOf, sinceLast } from '../lib/derive';
 import { PLANES, inviteText, planTitle } from '../lib/logic/plan';
 import { POINTS } from '../lib/logic/points';
@@ -74,6 +75,7 @@ export default function GroupPage({ onPropose }: { onPropose: (groupId: string) 
             <span className={`chip ${p.status === 'votando' ? 'warn' : p.status === 'definido' ? 'ok' : ''}`}>{p.status === 'votando' ? 'En votación' : p.status === 'definido' ? 'Confirmado' : 'Realizado'}</span></div>
           <p className="small muted">{p.date ? cap(fmtDay(p.date, { weekday: 'long', day: 'numeric', month: 'long' })) : `Propuesto por ${nick(p.createdBy)}`}</p>
         </button>)) : <div className="empty">Todavía no hicieron ningún plancito.</div>}
+      <NotesBoard g={g} />
       <section className="sec"><div className="sec-h"><h2>Punto de encuentro</h2><span className="small muted">a mitad de camino</span></div>
         <PuntoMedio people={g.members.map((m) => profiles[m]).filter(Boolean)} /></section>
     </>}
@@ -116,6 +118,10 @@ function Ajustes({ g }: { g: Group }) {
   };
   return <>
     <div className="card"><GroupImageEditor g={g} /></div>
+    <div className="card"><div className="field"><label htmlFor="gName">Nombre del grupo</label>
+      <input id="gName" className="inp" maxLength={40} defaultValue={g.name} key={g.name}
+        onBlur={(e) => { const v = e.target.value.trim(); if (!v) { e.target.value = g.name; toast('El grupo necesita un nombre'); return; } if (v !== g.name) save({ name: v }).then(() => toast('Nombre actualizado')); }}
+        onKeyDown={(e) => { if (e.key === 'Enter') (e.target as HTMLInputElement).blur(); }} /></div></div>
     <div className="card"><h3>Objetivo de juntadas</h3>
       <div className="grid2">
         <select className="inp" aria-label="Cantidad" value={g.goal.n} onChange={(e) => save({ goal: { ...g.goal, n: Number(e.target.value) } })}>{[1, 2, 3, 4, 5, 6, 8, 10, 12].map((n) => <option key={n}>{n}</option>)}</select>
