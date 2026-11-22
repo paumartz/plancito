@@ -1,5 +1,7 @@
 import { useEffect, useState } from 'react';
 import { enablePush, pushState, type PushState } from '../lib/push';
+import { markGuide } from '../components/ProfileGuide';
+import { useLocation } from 'react-router-dom';
 import { api, type Profile as P } from '../data';
 import { useStore } from '../store';
 import { Svg, TopBar } from '../components/ui';
@@ -19,6 +21,14 @@ export default function Profile() {
   const [push, setPush] = useState<PushState | null>(null);
   const [wish, setWish] = useState('');
   useEffect(() => { pushState().then(setPush).catch(() => setPush('unsupported')); }, []);
+  // Desde la guía del inicio: ir directo al campo o la sección que falta.
+  const loc = useLocation();
+  useEffect(() => {
+    if (!loc.hash) return;
+    const t = setTimeout(() => { const el = document.getElementById(loc.hash.slice(1)); if (!el) return;
+      el.scrollIntoView({ behavior: 'smooth', block: 'center' }); if (el instanceof HTMLInputElement || el instanceof HTMLSelectElement) el.focus({ preventScroll: true }); }, 250);
+    return () => clearTimeout(t);
+  }, [loc.hash]);
   if (!me || !userId) return null;
   const pts = pointsOf(points, userId), li = levelOf(pts), nx = LEVELS[li + 1];
   const pct = nx ? ((pts - LEVELS[li][0]) / (nx[0] - LEVELS[li][0])) * 100 : 100;
@@ -26,7 +36,7 @@ export default function Profile() {
   const zName = (k: string) => ZSTYLES.find((z) => z[0] === k)![1].toLowerCase();
 
   const save = async (patch: Partial<P>) => { try { await api.saveMe(patch); await reload(); } catch (e) { toast('No se pudo guardar: ' + (e as Error).message); } };
-  const setAv = (k: keyof AvatarOpts, v: string) => save({ avatar: { ...me.avatar, [k]: v } });
+  const setAv = (k: keyof AvatarOpts, v: string) => { markGuide(userId, 'avatar'); save({ avatar: { ...me.avatar, [k]: v } }); };
   const field = (k: 'name' | 'nick' | 'alias' | 'bank', label: string, ph = '') =>
     <div className="field"><label htmlFor={'pf' + k}>{label}</label><input id={'pf' + k} className="inp" defaultValue={me[k]} placeholder={ph} onBlur={(e) => e.target.value !== me[k] && save({ [k]: e.target.value.trim() })} /></div>;
 
@@ -36,9 +46,9 @@ export default function Profile() {
 
     <section className="sec"><span className="eyebrow">Arrancá de un modelo</span>
       <div className="row" style={{ overflowX: 'auto', gap: 8, paddingBottom: 4 }}>{TEMPLATES.map((t, i) =>
-        <button key={i} className="avb" style={{ width: 58, height: 58, padding: 0 }} aria-label={`Modelo ${i + 1}`} onClick={() => save({ avatar: { ...t } })} dangerouslySetInnerHTML={{ __html: avatar(t, 58) }} />)}</div>
+        <button key={i} className="avb" style={{ width: 58, height: 58, padding: 0 }} aria-label={`Modelo ${i + 1}`} onClick={() => { markGuide(userId, 'avatar'); save({ avatar: { ...t } }); }} dangerouslySetInnerHTML={{ __html: avatar(t, 58) }} />)}</div>
     </section>
-    <section className="sec"><span className="eyebrow">Personalizalo</span>
+    <section className="sec" id="avatar"><span className="eyebrow">Personalizalo</span>
       <div className="tabs">{AV_TABS.map(([k, l]: string[]) => <button key={k} className={`tab ${tab === k ? 'on' : ''}`} onClick={() => setTab(k)}>{l}</button>)}</div>
       <div className="avpicker">{(AV_OPTS as Record<string, string[][]>)[tab].map(([v, l]) =>
         <button key={v} className={(me.avatar as unknown as Record<string, string>)[tab] === v ? 'on' : ''} onClick={() => setAv(tab as keyof AvatarOpts, v)}>
@@ -56,7 +66,7 @@ export default function Profile() {
       <p className="small muted" style={{ marginTop: -4 }}>Tu alias lo ven tus grupos para pagarte. Del lugar usamos solo el barrio, nunca tu dirección.</p>
     </section>
 
-    <section className="sec"><h2>Notificaciones</h2>
+    <section className="sec" id="notificaciones"><h2>Notificaciones</h2>
       <div className="card tight">
         {push === 'on' ? <p className="small"><b>Activadas.</b> Te avisamos de zumbidos, plancitos nuevos, recordatorios, deudas y cumples.</p>
           : push === 'needs-install' ? <p className="small">En iPhone, primero agregá Plancito a la pantalla de inicio (Compartir → Agregar a inicio) y abrilo desde ahí.</p>
@@ -97,12 +107,12 @@ export default function Profile() {
         <div className="list" style={{ marginTop: 6 }}>{Object.entries(POINTS).map(([k, [n, l]]) => <div key={k} className="li"><span className="grow">{l}</span><b className="num">+{n} ★</b></div>)}</div></details>
     </section>
 
-    <section className="sec"><h2>Tu zumbido</h2><p className="small muted" style={{ marginTop: -6 }}>Como en el MSN: sacude la pantalla del grupo. Elegí cómo les llega.</p>
+    <section className="sec" id="zumbido"><h2>Tu zumbido</h2><p className="small muted" style={{ marginTop: -6 }}>Como en el MSN: sacude la pantalla del grupo. Elegí cómo les llega.</p>
       <div className="grid4">{ZSTYLES.map(([k, l]) => { const need = ZUNLOCK[k] || 0, locked = need > pts;
         return <button key={k} className={`zbtn ${me.zumbido.style === k ? 'on' : ''} ${locked ? 'locked' : ''}`}
-          onClick={() => locked ? toast(`Se desbloquea con ${need} ★. Te faltan ${need - pts}.`) : save({ zumbido: { ...me.zumbido, style: k } })}>
+          onClick={() => locked ? toast(`Se desbloquea con ${need} ★. Te faltan ${need - pts}.`) : (markGuide(userId, 'zumbido'), save({ zumbido: { ...me.zumbido, style: k } }))}>
           <Svg html={zIcon(k)} />{l}{locked && <span className="lockb">★ {need}</span>}</button>; })}</div>
-      <div className="field"><label htmlFor="zMsg">Tu frase</label><input id="zMsg" className="inp" maxLength={40} defaultValue={me.zumbido.msg} onBlur={(e) => save({ zumbido: { ...me.zumbido, msg: e.target.value.trim() } })} /></div>
+      <div className="field"><label htmlFor="zMsg">Tu frase</label><input id="zMsg" className="inp" maxLength={40} defaultValue={me.zumbido.msg} onBlur={(e) => { markGuide(userId, 'zumbido'); save({ zumbido: { ...me.zumbido, msg: e.target.value.trim() } }); }} /></div>
       <div className="row between wrap"><label className="check"><input type="checkbox" checked={me.zumbido.sound !== false} onChange={(e) => save({ zumbido: { ...me.zumbido, sound: e.target.checked } })} /> Con sonido</label>
         <button className="btn" onClick={() => playBuzz({ av: me.avatar, text: 'Así les va a llegar tu zumbido', style: me.zumbido.style, msg: me.zumbido.msg, sound: me.zumbido.sound })}>Probar mi zumbido</button></div>
     </section>

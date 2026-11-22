@@ -59,8 +59,8 @@ export interface Plan {
 export interface PointEntry { userId: string; groupId: string; kind: string; pts: number; createdAt: string }
 export interface Buzz { id: string; groupId: string; from: string; style: string; msg?: string | null; createdAt: string }
 
-export type NoteKind = 'no-estoy' | 'recomendacion' | 'fecha' | 'otro';
-export interface Note { id: string; groupId: string; author: string; kind: NoteKind; text: string; from?: string | null; to?: string | null; createdAt: string }
+export type NoteKind = 'no-estoy' | 'semanal' | 'recomendacion' | 'fecha' | 'otro';
+export interface Note { id: string; groupId: string; author: string; kind: NoteKind; text: string; from?: string | null; to?: string | null; repeat?: number[] | null; moment?: string | null; createdAt: string }
 
 export type RegalitoStatus = 'votando' | 'aprobado' | 'comprado' | 'entregado';
 export interface Regalito {

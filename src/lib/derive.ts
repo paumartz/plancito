@@ -97,12 +97,27 @@ export function activeNotes(notes: Note[], groupId: string) {
   return notes.filter((n) => n.groupId === groupId && !((n.to || n.from) && (n.to || n.from)! < t))
     .sort((a, b) => ((a.from || '9999') + a.createdAt).localeCompare((b.from || '9999') + b.createdAt));
 }
-/** Para cada día, quiénes avisaron que no están (vacaciones, etc.). */
-export function awayByDay(notes: Note[], groupId: string, nick: (id: string) => string): Record<string, string> {
+/**
+ * Quién avisó que no está, por día ("2026-11-28") y por horario ("2026-11-28|noche").
+ * Junta los avisos con fechas (vacaciones) y los que se repiten cada semana.
+ */
+export function awayMap(notes: Note[], groupId: string, days: string[]): Record<string, string[]> {
   const out: Record<string, string[]> = {};
-  for (const n of notes.filter((x) => x.groupId === groupId && x.kind === 'no-estoy' && x.from)) {
-    const d = parseISO(n.from!), end = parseISO(n.to || n.from!);
-    for (let i = 0; d <= end && i < 120; i++, d.setDate(d.getDate() + 1)) (out[iso(d)] ||= []).push(nick(n.author));
+  const add = (k: string, who: string) => { const a = (out[k] ||= []); if (!a.includes(who)) a.push(who); };
+  for (const n of notes.filter((x) => x.groupId === groupId)) {
+    if (n.kind === 'no-estoy' && n.from) {
+      const d = parseISO(n.from), end = parseISO(n.to || n.from);
+      for (let i = 0; d <= end && i < 120; i++, d.setDate(d.getDate() + 1)) add(iso(d), n.author);
+    }
+    if (n.kind === 'semanal' && n.repeat?.length)
+      for (const day of days) if (n.repeat.includes(parseISO(day).getDay())) add(n.moment ? `${day}|${n.moment}` : day, n.author);
   }
-  return Object.fromEntries(Object.entries(out).map(([k, v]) => [k, 'No está: ' + [...new Set(v)].join(', ')]));
+  return out;
+}
+/** Texto corto por día para el calendario: "No está: Lola". */
+export function awayByDay(notes: Note[], groupId: string, nick: (id: string) => string, days?: string[]): Record<string, string> {
+  const range = days || Array.from({ length: 100 }, (_, i) => { const d = today(); d.setDate(d.getDate() + i); return iso(d); });
+  const m = awayMap(notes, groupId, range), out: Record<string, string[]> = {};
+  for (const [k, who] of Object.entries(m)) { const day = k.split('|')[0]; for (const w of who) { const a = (out[day] ||= []); const label = k.includes('|') ? `${nick(w)} (${k.split('|')[1] === 'manana' ? 'mañana' : k.split('|')[1] === 'mediodia' ? 'mediodía' : k.split('|')[1]})` : nick(w); if (!a.includes(label)) a.push(label); } }
+  return Object.fromEntries(Object.entries(out).map(([k, v]) => [k, 'No puede: ' + v.join(', ')]));
 }

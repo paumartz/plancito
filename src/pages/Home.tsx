@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useStore } from '../store';
 import { Av, AvStack, GroupPic, I, Sheet } from '../components/ui';
 import { playBuzz } from '../components/fx';
+import ProfileGuide from '../components/ProfileGuide';
 import { activePlan, attendees, effDone, goalTxt, lastLabel, nextPlan, notifications, overdue, pointsOf, type Notif } from '../lib/derive';
 import { LEVELS, levelOf } from '../lib/logic/points';
 import { planSentence, planTitle } from '../lib/logic/plan';
@@ -45,6 +46,8 @@ export default function Home({ onPropose }: { onPropose: (groupId?: string) => v
       </div>
       <button className="bell" onClick={() => setShowAll(true)} aria-label={`Notificaciones: ${items.length}`}>{I.bell}{items.length > 0 && <span className="badge num">{items.length}</span>}</button>
     </div>
+
+    <ProfileGuide />
 
     {items.length > 0 && <div className="nlist">{row(items[0], 0)}{items.length > 1 && <button className="link small" style={{ alignSelf: 'flex-start' }} onClick={() => setShowAll(true)}>Ver {items.length - 1} más</button>}</div>}
 

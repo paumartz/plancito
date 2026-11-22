@@ -320,3 +320,11 @@ input[type="date"].inp{display:block;width:100%;min-width:0;-webkit-appearance:n
 .mcal-d.mk::after{content:"";position:absolute;left:50%;bottom:3px;width:5px;height:5px;border-radius:50%;background:var(--tomato);transform:translateX(-50%)}
 .slotgrid .d{flex-direction:column;align-items:flex-start;justify-content:center}
 .away{display:block;font-size:10px;font-weight:700;color:var(--tomato);white-space:normal;line-height:1.1;max-width:80px}
+
+.slot.blocked{background-image:repeating-linear-gradient(135deg, transparent 0 6px, color-mix(in srgb, var(--tomato) 14%, transparent) 6px 8px)}
+.away-cell{display:block;font-size:9.5px;font-weight:700;color:var(--tomato);line-height:1.05;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+
+.guide{gap:10px}
+.guide-row{width:100%;background:none;border:0;border-top:1.5px solid var(--line);padding:10px 0;display:flex;align-items:center;gap:12px;color:inherit}
+.guide-row:first-child{border-top:0}
+.guide-row .cta{font-size:20px;font-weight:800;color:var(--tomato)}

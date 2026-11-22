@@ -4,7 +4,7 @@ import { api, type Group, type Plan } from '../data';
 import { useStore } from '../store';
 import { Av, AvStack, I, Sheet, TopBar, copyText, shareText } from '../components/ui';
 import { celebrate, starBurst } from '../components/fx';
-import { attendees, awayByDay, effBallots, effDone, planDays } from '../lib/derive';
+import { attendees, awayMap, effBallots, effDone, planDays } from '../lib/derive';
 import {
   COCINA, LUGARES, inviteText, MOM, MOMENTOS, PLANES, closeCuando, closeDonde, emptyBallot, gcalUrl, leadPlan, lugaresFor, menusFor,
   planSentence, planTitle, planesFor, slotId, votersFor, type Ballot, type BallotDonde,
@@ -110,10 +110,10 @@ function PlanView({ p, g }: { p: Plan; g: Group }) {
     const steps = <div className="row" style={{ gap: 6 }}>{([['cuando', '1 · Cuándo'], ['donde', '2 · Qué y dónde']] as const).map(([k, l], i) =>
       <span key={k} className="row" style={{ gap: 6 }}>{i > 0 && <span className="muted">→</span>}<span className={`chip ${round === k ? 'pastel' : ''}`}>{l}</span></span>)}</div>;
     if (round === 'cuando') {
-      const away = awayByDay(st.notes, g.id, nick);
       const days = planDays(p), total = att.length, ids = days.flatMap((d) => MOMENTOS.map((m) => slotId(d.id, m.id)));
       let bestId = ids[0], bestN = 0;
       ids.forEach((x) => { const n = votersFor(ballots, 'slots', x).length; if (n > bestN) { bestN = n; bestId = x; } });
+      const away = awayMap(st.notes, g.id, days.map((d) => d.id));
       const [bd, bm] = bestId.split('|'), prop = p.proposed, pd = prop.dia && days.find((d) => d.id === prop.dia);
       return <>
         {steps}
@@ -124,11 +124,11 @@ function PlanView({ p, g }: { p: Plan; g: Group }) {
             {pd && !imOut && !iDone && <button className="btn sm" onClick={() => save({ ...mine, slots: [...new Set([...(mine.slots || []), slotId(prop.dia!, prop.momento!)])] }, true)}>Me sirve</button>}</div>
             <p className="small muted">{pd ? 'Si te sirve, un toque y listo. Si no, marcá lo que puedas abajo.' : `Marcá qué días podés ${MOM(prop.momento).en}. Si te sirve otro momento, también vale.`}</p></div>}
           <div className="slotgrid"><span />{MOMENTOS.map((m) => <span key={m.id} className="h">{m.label}</span>)}
-            {days.map((d) => [<span key={d.id} className="d">{d.label}{away[d.id] && <small className="away">{away[d.id]}</small>}</span>, ...MOMENTOS.map((m) => {
+            {days.map((d) => [<span key={d.id} className="d">{d.label}{away[d.id] && <small className="away">No está: {away[d.id].map(nick).join(', ')}</small>}</span>, ...MOMENTOS.map((m) => {
               const sid = slotId(d.id, m.id), v = votersFor(ballots, 'slots', sid), on = (mine.slots || []).includes(sid), win = sid === bestId && bestN > 0;
-              return <button key={sid} className={`slot ${on ? 'mine' : ''} ${win ? 'best' : ''}`} style={{ ['--h' as string]: total ? v.length / total : 0 }} disabled={imOut}
+              return <button key={sid} className={`slot ${on ? 'mine' : ''} ${win ? 'best' : ''} ${away[sid] || away[d.id] ? 'blocked' : ''}`} style={{ ['--h' as string]: total ? v.length / total : 0 }} disabled={imOut}
                 aria-pressed={on} aria-label={`${d.label} ${m.label}: pueden ${v.length}`} onClick={() => toggle('slots', sid)}>
-                <span className="num">{on ? '✓ ' : ''}{v.length}/{total}</span>{win && <small>gana</small>}</button>;
+                <span className="num">{on ? '✓ ' : ''}{v.length}/{total}</span>{win && <small>gana</small>}{away[sid] && <small className="away-cell">no: {away[sid].map(nick).join(', ')}</small>}</button>;
             })])}
           </div>
           {bestN > 0 && <div className="card tight"><span className="eyebrow">Por ahora gana</span><h3>{days.find((d) => d.id === bd)?.label} · {MOM(bm).label}</h3>

@@ -184,11 +184,14 @@ export function makeSupabaseApi(url: string, key: string): Api {
       if (!groupIds.length) return [];
       const r = await sb.from('group_notes').select('*').in('group_id', groupIds);
       if (r.error) { console.warn('Avisos no disponibles:', r.error.message); return []; } // si falta correr 0004_avisos.sql, la app sigue andando
-      return (r.data as any[]).map((n): Note => ({ id: n.id, groupId: n.group_id, author: n.author, kind: n.kind, text: n.text, from: n.date_from, to: n.date_to, createdAt: n.created_at }));
+      return (r.data as any[]).map((n): Note => ({ id: n.id, groupId: n.group_id, author: n.author, kind: n.kind, text: n.text, from: n.date_from, to: n.date_to, repeat: n.repeat_days, moment: n.moment, createdAt: n.created_at }));
     },
     async addNote(n) {
-      const r = await sb.from('group_notes').insert({ group_id: n.groupId, kind: n.kind, text: n.text, date_from: n.from || null, date_to: n.to || null });
-      if (r.error) throw new Error(/does not exist|schema cache/i.test(r.error.message) ? 'Falta correr 0004_avisos.sql en Supabase' : r.error.message);
+      const row: any = { group_id: n.groupId, kind: n.kind, text: n.text, date_from: n.from || null, date_to: n.to || null };
+      if (n.kind === 'semanal') { row.repeat_days = n.repeat || []; row.moment = n.moment || null; }
+      const r = await sb.from('group_notes').insert(row);
+      if (r.error) throw new Error(/repeat_days|moment|check constraint/i.test(r.error.message) ? 'Falta correr 0005_avisos_semanales.sql en Supabase'
+        : /does not exist|schema cache/i.test(r.error.message) ? 'Falta correr 0004_avisos.sql en Supabase' : r.error.message);
     },
     async deleteNote(id) { must(await sb.from('group_notes').delete().eq('id', id)); },
     async listRegalitos(groupIds) {
