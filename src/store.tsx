@@ -44,7 +44,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   useEffect(() => { fetchMep().then((m) => { mepRef.current = m; setMep(m); }); }, []);
 
   const toast = useCallback((msg: string) => {
-    setToast(msg); clearTimeout(toastT.current); toastT.current = setTimeout(() => setToast(null), 2600);
+    setToast(msg); clearTimeout(toastT.current); toastT.current = setTimeout(() => setToast(null), msg.length > 80 ? 9000 : 2600);
   }, []);
 
   const reload = useCallback(async () => {
@@ -73,7 +73,11 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       setS({ ready: true, userId, profiles, groups, plans, points, buzzes, regalitos });
     } catch (e) {
       console.error(e);
-      toast('No pudimos cargar los datos. Revisá tu conexión.');
+      const msg = (e as Error).message || String(e);
+      // Mensaje concreto para poder diagnosticar (por ejemplo, si falta correr el SQL en Supabase).
+      if (/does not exist|schema cache|relation|Could not find/i.test(msg)) toast('Falta preparar la base: corré los archivos SQL de supabase/migrations en Supabase. Detalle: ' + msg);
+      else if (/Failed to fetch|NetworkError|Load failed/i.test(msg)) toast('No pudimos conectarnos con el servidor. Revisá tu conexión.');
+      else toast('No pudimos cargar los datos: ' + msg);
       setS((x) => ({ ...x, ready: true }));
     }
   }, [toast]);
