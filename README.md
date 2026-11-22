@@ -21,7 +21,7 @@ Sin configurar Supabase corre en **modo local**: los datos quedan en el navegado
 1. Creá un proyecto gratis en [supabase.com](https://supabase.com).
 2. En **SQL Editor → New query**, pegá el contenido de `supabase/migrations/0001_init.sql` y tocá **Run**. Después hacé lo mismo con `supabase/migrations/0002_regalito_push.sql` y con `supabase/migrations/0003_permisos.sql` (sin este último aparece "permission denied for table").
 3. En **Authentication → URL Configuration**, poné como **Site URL** la dirección de Netlify (por ejemplo `https://plancito.netlify.app`) y agregala también en **Redirect URLs** como `https://plancito.netlify.app/**`.
-4. **Login con mail y contraseña** (así en iPhone se entra desde la app de la pantalla de inicio y no se manda ningún mail): en **Authentication → Sign In / Providers → Email**, apagá **Confirm email** y guardá.
+4. **Login con mail y contraseña, sin mails de confirmación**: las cuentas las crea la función `signup` de Netlify ya confirmadas. Solo necesita la variable `SUPABASE_SERVICE_ROLE_KEY` en Netlify (ver paso 2).
 5. Copiá la **Project URL** (Project Settings → Data API, tiene la forma `https://xxxx.supabase.co`) y la **Publishable key** (Project Settings → API Keys, empieza con `sb_publishable_`; en proyectos viejos se llama *anon key*).
 
 ### 2. Netlify (publicación)
@@ -30,6 +30,7 @@ Sin configurar Supabase corre en **modo local**: los datos quedan en el navegado
 3. En **Site configuration → Environment variables** agregá:
    - `VITE_SUPABASE_URL` = la Project URL
    - `VITE_SUPABASE_ANON_KEY` = la Publishable key (`sb_publishable_...`)
+   - `SUPABASE_SERVICE_ROLE_KEY` = la Secret key (`sb_secret_...`, en Supabase → Project Settings → API Keys). Marcala como secreta. Sirve para crear cuentas sin mail de confirmación y para las notificaciones.
 4. Volvé a desplegar. Cada cambio que se suba a la rama publicada se despliega solo.
 
 ### 3. Notificaciones push (zumbidos, recordatorios, deudas, cumples)

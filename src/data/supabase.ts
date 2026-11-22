@@ -52,6 +52,21 @@ export function makeSupabaseApi(url: string, key: string): Api {
       if (error) throw new Error(error.message);
     },
     async signUp(email, password) {
+      // Primero, la función del servidor: crea la cuenta ya confirmada y sin mandar mails.
+      try {
+        const r = await fetch('/.netlify/functions/signup', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email, password }) });
+        if (r.ok) {
+          const { error } = await sb.auth.signInWithPassword({ email, password });
+          if (error) throw new Error(error.message);
+          return 'ok';
+        }
+        const j = await r.json().catch(() => ({}));
+        if (r.status === 409) throw new Error('User already registered');
+        if (r.status !== 501 && r.status !== 404 && j.error) throw new Error(j.error);
+      } catch (e) {
+        if (!/Failed to fetch|NetworkError|Load failed|Unexpected token/i.test((e as Error).message)) throw e;
+      }
+      // Si la función no está configurada, alta común de Supabase.
       const { data, error } = await sb.auth.signUp({ email, password });
       if (error) throw new Error(error.message);
       return data.session ? 'ok' : 'confirm';
