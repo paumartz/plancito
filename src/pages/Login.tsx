@@ -15,8 +15,8 @@ export default function Login() {
   const [info, setInfo] = useState('');
 
   const friendly = (m: string) =>
-    /invalid login credentials/i.test(m) ? 'El mail o la contraseña no son correctos.'
-      : /already registered|already exists/i.test(m) ? 'Ya hay una cuenta con ese mail. Tocá "Ya tengo cuenta" y entrá con tu contraseña.'
+    /invalid login credentials/i.test(m) ? 'El mail o la contraseña no son correctos. Si no te la acordás, tocá "¿Te olvidaste la contraseña?".'
+      : /already registered|already exists/i.test(m) ? 'Ya hay una cuenta con ese mail. Tocá "Ya tengo cuenta" y entrá con tu contraseña (si no te la acordás, usá "¿Te olvidaste la contraseña?").'
       : /email not confirmed/i.test(m) ? 'Esta cuenta todavía no está confirmada. Pedile a quien administra Plancito que apague "Confirm email" en Supabase.'
       : /password/i.test(m) && /6|short|least/i.test(m) ? 'La contraseña tiene que tener al menos 6 caracteres.'
       : /rate limit|too many/i.test(m) ? 'Muchos intentos seguidos. Esperá un ratito y probá de nuevo.'
@@ -35,6 +35,15 @@ export default function Login() {
         if (r === 'confirm') setInfo('Te mandamos un mail para confirmar la cuenta. Después volvé acá y entrá con tu contraseña.');
       } else await api.signIn(email.trim(), pw);
     } catch (ex) { setErr(friendly((ex as Error).message || '')); }
+    finally { setBusy(false); }
+  }
+
+  async function forgot() {
+    setErr(''); setInfo('');
+    if (!/^\S+@\S+\.\S+$/.test(email.trim())) { setErr('Escribí tu mail arriba y tocá de nuevo "¿Te olvidaste la contraseña?".'); return; }
+    setBusy(true);
+    try { await api.requestPasswordReset(email.trim()); setInfo('Te mandamos un mail con un link para elegir una contraseña nueva. Abrilo, elegila y después volvé acá y entrá.'); }
+    catch (ex) { setErr(friendly((ex as Error).message || '')); }
     finally { setBusy(false); }
   }
 
@@ -57,6 +66,7 @@ export default function Login() {
         {err && <p className="err">{err}</p>}
         {info && <div className="sticker bg-lime"><p className="small">{info}</p></div>}
         <button className="btn tomato full" disabled={busy}>{busy ? 'Un segundo…' : mode === 'crear' ? 'Crear mi cuenta' : 'Entrar'}</button>
+        {mode === 'entrar' && api.mode !== 'local' && <button type="button" className="link small" onClick={forgot}>¿Te olvidaste la contraseña?</button>}
         {api.mode === 'local' && <p className="small muted">Modo local: no hace falta contraseña.</p>}
         <p className="small muted" style={{ opacity: .6 }}>Versión {__BUILD__}</p>
       </form>

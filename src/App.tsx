@@ -11,12 +11,15 @@ import GroupPage from './pages/GroupPage';
 import PlanPage from './pages/PlanPage';
 import Profile from './pages/Profile';
 import Join from './pages/Join';
+import ResetPassword from './pages/ResetPassword';
 
 export default function App() {
   const { ready, userId } = useStore();
   const loc = useLocation();
   const [propose, setPropose] = useState<string | null | undefined>(undefined);
 
+  // El link de "olvidé mi contraseña" abre esta pantalla, haya sesión o no.
+  if (loc.pathname === '/nueva-clave') return <ResetPassword />;
   if (!ready) return <div className="center-page"><p className="muted">Cargando…</p></div>;
   if (!userId) {
     // Guardamos adónde quería ir (por ejemplo un link de invitación) para volver después del login.

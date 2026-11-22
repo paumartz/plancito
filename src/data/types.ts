@@ -85,6 +85,9 @@ export interface Api {
   signIn(email: string, password: string): Promise<void>;
   /** Crea la cuenta. Devuelve 'confirm' si Supabase todavía pide confirmar el mail. */
   signUp(email: string, password: string): Promise<'ok' | 'confirm'>;
+  /** Manda el mail para elegir una contraseña nueva. */
+  requestPasswordReset(email: string): Promise<void>;
+  updatePassword(password: string): Promise<void>;
   signOut(): Promise<void>;
   onAuthChange(cb: () => void): () => void;
 

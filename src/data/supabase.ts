@@ -40,7 +40,8 @@ const toPlan = (r: any): Plan => {
 };
 
 export function makeSupabaseApi(url: string, key: string): Api {
-  const sb: SupabaseClient = createClient(url, key);
+  // implicit: el link del mail se puede abrir en otro navegador (Safari) que la app instalada.
+  const sb: SupabaseClient = createClient(url, key, { auth: { flowType: 'implicit' } });
   const uid = async () => (await sb.auth.getSession()).data.session?.user.id ?? null;
   const must = <T,>(r: { data: T; error: any }) => { if (r.error) throw new Error(r.error.message); return r.data; };
 
@@ -67,6 +68,14 @@ export function makeSupabaseApi(url: string, key: string): Api {
       if (r.status === 501) throw new Error('Falta configurar el servidor: cargá SUPABASE_SERVICE_ROLE_KEY en Netlify y volvé a desplegar.');
       if (r.status === 404) throw new Error('La función de alta no está publicada en Netlify. Volvé a desplegar el sitio.');
       throw new Error(j.error || `Error del servidor (${r.status})`);
+    },
+    async requestPasswordReset(email) {
+      const { error } = await sb.auth.resetPasswordForEmail(email, { redirectTo: window.location.origin + '/nueva-clave' });
+      if (error) throw new Error(error.message);
+    },
+    async updatePassword(password) {
+      const { error } = await sb.auth.updateUser({ password });
+      if (error) throw new Error(error.message);
     },
     async signOut() { await sb.auth.signOut(); },
     onAuthChange(cb) {

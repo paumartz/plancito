@@ -44,6 +44,8 @@ export const localApi: Api = {
     }
     db.session = id; save();
   },
+  async requestPasswordReset() { /* modo local: sin contraseñas */ },
+  async updatePassword() { /* modo local: sin contraseñas */ },
   async signOut() { db.session = null; save(); },
   onAuthChange(cb) { listeners.add(cb); return () => listeners.delete(cb); },
 
