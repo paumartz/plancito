@@ -2,6 +2,8 @@ import { useState } from 'react';
 import { api } from '../data';
 import { avatar, TEMPLATES } from '../components/avatarSvg';
 
+declare const __BUILD__: string;
+
 // Mail y contraseña: se entra directo desde la app de la pantalla de inicio, sin mails ni links
 // (en iPhone, un link del mail abre Safari y la sesión no llega a la app instalada).
 export default function Login() {
@@ -56,6 +58,7 @@ export default function Login() {
         {info && <div className="sticker bg-lime"><p className="small">{info}</p></div>}
         <button className="btn tomato full" disabled={busy}>{busy ? 'Un segundo…' : mode === 'crear' ? 'Crear mi cuenta' : 'Entrar'}</button>
         {api.mode === 'local' && <p className="small muted">Modo local: no hace falta contraseña.</p>}
+        <p className="small muted" style={{ opacity: .6 }}>Versión {__BUILD__}</p>
       </form>
     </div>
   );
