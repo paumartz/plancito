@@ -4,7 +4,7 @@ import { api, type Group } from '../data';
 import { useStore } from '../store';
 import { Av, AvStack, GroupPic, I, Sheet, Svg, TopBar, copyText, shareText } from '../components/ui';
 import { playBuzz } from '../components/fx';
-import { GROUP_COLORS, GROUP_ICONS, lineIconSvg } from '../components/groupIcon';
+import GroupImageEditor from '../components/GroupImageEditor';
 import { activePlan, doneThisPeriod, goalTxt, hasDonePlan, nextPlan, overdue, pointsOf, sinceLast } from '../lib/derive';
 import { PLANES, planTitle } from '../lib/logic/plan';
 import { POINTS } from '../lib/logic/points';
@@ -49,7 +49,7 @@ export default function GroupPage({ onPropose }: { onPropose: (groupId: string) 
     <TopBar title={g.name} back="/grupos" right={<div className="row" style={{ gap: 6 }}>
       <button className="btn sm tomato" onClick={buzz}>{I.bolt} Zumbido</button>
       <button className="btn sm ghost" onClick={() => setParams({ invitar: '1' })}>Invitar</button></div>} />
-    <div className="row" style={{ gap: 14 }}><GroupPic g={g} size={60} /><div className="grow"><AvStack ids={g.members} size={34} />
+    <div className="row" style={{ gap: 14 }}><button className="gpic-edit" onClick={() => setParams({ imagen: '1' })} aria-label="Cambiar la imagen del grupo"><GroupPic g={g} size={60} /><span className="gpic-pen">✎</span></button><div className="grow"><AvStack ids={g.members} size={34} />
       <p className="small muted" style={{ marginTop: 4 }}>{g.members.map(nick).join(', ')}</p></div></div>
     <div className="tabs" role="tablist">{((g.kind === 'amigos' ? ['plancitos', 'regalito', 'puntos', 'ajustes'] : ['plancitos', 'puntos', 'ajustes']) as ('plancitos' | 'regalito' | 'puntos' | 'ajustes')[]).map((k) =>
       <button key={k} className={`tab ${tab === k ? 'on' : ''}`} onClick={() => setTab(k)}>{cap(k)}</button>)}</div>
@@ -79,6 +79,7 @@ export default function GroupPage({ onPropose }: { onPropose: (groupId: string) 
     {tab === 'puntos' && <Ranking g={g} />}
     {tab === 'ajustes' && <Ajustes g={g} />}
 
+    {params.get('imagen') === '1' && <Sheet onClose={() => setParams({})}><GroupImageEditor g={g} /><button className="btn full" onClick={() => setParams({})}>Listo</button></Sheet>}
     {inviting && <Sheet onClose={() => setParams({})}>
       <h2>Invitá al grupo</h2>
       <p className="muted small">Pegá este link en el grupo de WhatsApp. Quien lo abre se crea el perfil y queda adentro.</p>
@@ -109,23 +110,8 @@ function Ajustes({ g }: { g: Group }) {
   const save = async (patch: Parameters<typeof api.updateGroup>[1]) => {
     try { await api.updateGroup(g.id, patch); await reload(); } catch (e) { toast('No se pudo guardar: ' + (e as Error).message); }
   };
-  function onPhoto(f?: File) {
-    if (!f) return;
-    const rd = new FileReader();
-    rd.onload = () => { const im = new Image(); im.onload = () => {
-      const k = Math.min(1, 320 / Math.max(im.width, im.height)), c = document.createElement('canvas');
-      c.width = Math.round(im.width * k); c.height = Math.round(im.height * k); c.getContext('2d')!.drawImage(im, 0, 0, c.width, c.height);
-      save({ photoUrl: c.toDataURL('image/jpeg', 0.82) }).then(() => toast('Foto del grupo actualizada'));
-    }; im.src = rd.result as string; };
-    rd.readAsDataURL(f);
-  }
   return <>
-    <div className="card"><div className="row"><div className="grow"><h3>Foto o ícono</h3><p className="small muted">Si no hay foto, se usa el ícono.</p></div><GroupPic g={g} size={56} /></div>
-      <div className="row wrap"><label className="btn sm" style={{ cursor: 'pointer' }}>{g.photoUrl ? 'Cambiar foto' : 'Subir foto'}<input type="file" accept="image/*" hidden onChange={(e) => onPhoto(e.target.files?.[0])} /></label>
-        {g.photoUrl && <button className="btn sm ghost" onClick={() => save({ photoUrl: null })}>Quitar foto</button>}</div>
-      <div className="icopick">{Object.keys(GROUP_ICONS).map((k) => <button key={k} className={g.icon.icon === k ? 'on' : ''} aria-label={k} onClick={() => save({ icon: { ...g.icon, icon: k } })}><Svg html={lineIconSvg(k, 30)} /></button>)}</div>
-      <div className="swatches">{Object.entries(GROUP_COLORS).map(([k, c]) => <button key={k} aria-label={k} className={g.icon.color === k ? 'on' : ''} style={{ background: c }} onClick={() => save({ icon: { ...g.icon, color: k } })} />)}</div>
-    </div>
+    <div className="card"><GroupImageEditor g={g} /></div>
     <div className="card"><h3>Objetivo de juntadas</h3>
       <div className="grid2">
         <select className="inp" aria-label="Cantidad" value={g.goal.n} onChange={(e) => save({ goal: { ...g.goal, n: Number(e.target.value) } })}>{[1, 2, 3, 4, 5, 6, 8, 10, 12].map((n) => <option key={n}>{n}</option>)}</select>

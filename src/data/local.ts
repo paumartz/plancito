@@ -130,6 +130,17 @@ export const localApi: Api = {
   async markRegalitoPaid(rid, userId) { const r = db.regalitos.find((x) => x.id === rid)!; if (!r.payments.includes(userId)) r.payments.push(userId); save(); },
   async savePushSubscription() { /* en modo local no hay servidor de notificaciones */ },
 
+  onBuzz(cb) {
+    let known = new Set((load().buzzes || []).map((b) => b.id));
+    const onStorage = (e: StorageEvent) => {
+      if (e.key !== KEY) return;
+      const fresh = (load().buzzes || []).filter((b) => !known.has(b.id));
+      known = new Set([...known, ...fresh.map((b) => b.id)]);
+      fresh.forEach(cb);
+    };
+    window.addEventListener('storage', onStorage);
+    return () => window.removeEventListener('storage', onStorage);
+  },
   subscribe(cb) {
     const onStorage = (e: StorageEvent) => { if (e.key === KEY) { db = load(); cb(); } };
     window.addEventListener('storage', onStorage);

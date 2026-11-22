@@ -123,7 +123,8 @@ export function makeSupabaseApi(url: string, key: string): Api {
       if (patch.budgetMode) row.budget_mode = patch.budgetMode;
       if (patch.budgetDefault !== undefined) row.budget_default = patch.budgetDefault;
       if (patch.usdRate !== undefined) row.usd_rate = patch.usdRate;
-      must(await sb.from('groups').update(row).eq('id', id));
+      const rows = must(await sb.from('groups').update(row).eq('id', id).select('id')) as any[];
+      if (!rows.length) throw new Error('No tenés permiso para editar este grupo (¿corriste 0003_permisos.sql en Supabase?)');
     },
     async groupPreview(code) {
       const rows = must(await sb.rpc('group_preview', { code })) as any[];
@@ -202,6 +203,13 @@ export function makeSupabaseApi(url: string, key: string): Api {
       must(await sb.from('push_subscriptions').upsert({ endpoint: sub.endpoint, keys: sub.keys, user_id: me }));
     },
 
+    onBuzz(cb) {
+      const ch = sb.channel('plancito-zumbidos').on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'buzzes' }, (p: any) => {
+        const r = p.new;
+        cb({ id: String(r.id), groupId: r.group_id, from: r.from_user, style: r.style, msg: r.msg, createdAt: r.created_at });
+      }).subscribe();
+      return () => { sb.removeChannel(ch); };
+    },
     subscribe(cb) {
       let t: ReturnType<typeof setTimeout> | undefined;
       const debounced = () => { clearTimeout(t); t = setTimeout(cb, 250); };

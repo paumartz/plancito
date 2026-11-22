@@ -125,4 +125,6 @@ export interface Api {
   savePushSubscription(sub: { endpoint: string; keys: unknown }): Promise<void>;
 
   subscribe(cb: () => void): () => void;
+  /** Avisa apenas llega un zumbido nuevo (sin esperar a recargar todo). */
+  onBuzz(cb: (b: Buzz) => void): () => void;
 }

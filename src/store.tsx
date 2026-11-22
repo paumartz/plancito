@@ -86,7 +86,21 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     reload();
     const offAuth = api.onAuthChange(() => reload());
     const offSub = api.subscribe(() => reload());
-    return () => { offAuth(); offSub(); };
+    // Zumbidos al instante: se suman a la lista y se reproducen sin esperar la recarga completa.
+    const addBuzzes = (list: Buzz[]) => setS((x) => {
+      const ids = new Set(x.buzzes.map((b) => b.id)), fresh = list.filter((b) => !ids.has(b.id) && x.groups.some((g) => g.id === b.groupId));
+      return fresh.length ? { ...x, buzzes: [...x.buzzes, ...fresh] } : x;
+    });
+    const offBuzz = api.onBuzz((b) => addBuzzes([b]));
+    // Respaldo por si el tiempo real se corta: cada 15 segundos (con la app abierta) y al volver a la app.
+    const poll = () => {
+      if (document.visibilityState !== 'visible') return;
+      setS((x) => { if (x.userId && x.groups.length) api.listBuzzes(x.groups.map((g) => g.id)).then(addBuzzes).catch(() => undefined); return x; });
+    };
+    const timer = setInterval(poll, 15000);
+    const onVisible = () => { if (document.visibilityState === 'visible') { poll(); reload(); } };
+    document.addEventListener('visibilitychange', onVisible);
+    return () => { offAuth(); offSub(); offBuzz(); clearInterval(timer); document.removeEventListener('visibilitychange', onVisible); };
   }, [reload]);
 
   const markBuzzSeen = useCallback((id: string) => {

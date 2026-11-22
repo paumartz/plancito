@@ -4,7 +4,7 @@ import { api } from '../data';
 import { useStore } from '../store';
 import { AvStack, GroupPic, Sheet, TopBar } from '../components/ui';
 import { activePlan, doneThisPeriod, goalTxt, lastLabel, nextPlan, overdue } from '../lib/derive';
-import { GROUP_COLORS, GROUP_ICONS } from '../components/groupIcon';
+import { ART_COLORS, ART_KEYS } from '../components/groupArt';
 
 export default function Groups() {
   const { groups, plans, reload, toast } = useStore();
@@ -19,9 +19,9 @@ export default function Groups() {
   async function create() {
     if (!name.trim()) { toast('Ponele un nombre al grupo'); return; }
     const [n, per] = goal.split('-');
-    const icons = Object.keys(GROUP_ICONS), colors = Object.keys(GROUP_COLORS);
+    const icons = ART_KEYS, colors = ART_COLORS;
     try {
-      const g = await api.createGroup({ name: name.trim(), kind, goal: { n: Number(n), per: per as 'mes' }, icon: { icon: icons[groups.length % icons.length], color: colors[groups.length % colors.length] } });
+      const g = await api.createGroup({ name: name.trim(), kind, goal: { n: Number(n), per: per as 'mes' }, icon: { icon: icons[Math.floor(Math.random() * icons.length)], color: colors[Math.floor(Math.random() * colors.length)] } });
       await reload();
       nav(`/g/${g.id}?invitar=1`);
     } catch (e) { toast('No se pudo crear: ' + (e as Error).message); }

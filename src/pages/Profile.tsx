@@ -4,13 +4,14 @@ import { api, type Profile as P } from '../data';
 import { useStore } from '../store';
 import { Svg, TopBar } from '../components/ui';
 import { AV_OPTS, AV_TABS, TEMPLATES, avatar, type AvatarOpts } from '../components/avatarSvg';
-import { PIG, WINK, playBuzz } from '../components/fx';
+import { playBuzz, zIcon } from '../components/fx';
 import { pointsOf } from '../lib/derive';
 import { LEVELS, POINTS, ZSTYLES, ZUNLOCK, levelOf } from '../lib/logic/points';
 
 import { BARRIOS as BARRIO_MAP } from '../components/PuntoMedio';
 const BARRIOS = [...Object.keys(BARRIO_MAP).sort((a, b) => a.localeCompare(b, 'es')), 'Otro (fuera de CABA)'];
-const zIcon = (k: string, sz = 26) => k === 'chancho' ? PIG(sz) : k === 'guinos' ? WINK(sz) : `<span class="ico">${ZSTYLES.find((z) => z[0] === k)![2]}</span>`;
+
+const andList = (xs: string[]) => xs.length < 2 ? xs.join('') : xs.slice(0, -1).join(', ') + ' y ' + xs[xs.length - 1];
 
 export default function Profile() {
   const { me, userId, points, reload, toast } = useStore();
@@ -86,11 +87,11 @@ export default function Profile() {
     <section className="sec"><div className="sec-h"><h2>Tu nivel: {LEVELS[li][1]}</h2></div>
       <p className="small muted" style={{ marginTop: -6 }}>Cada vez que hacés algo por el grupo sumás estrellitas. Con más estrellitas subís de nivel, y cada nivel te da zumbidos nuevos.</p>
       {nx ? <div className="stack" style={{ gap: 5 }}><div className="meter"><span style={{ width: `${pct}%`, background: 'var(--tomato)' }} /></div>
-        <p className="small"><b>Te faltan {nx[0] - pts} ★</b> para {nx[1]}{rewards(nx[0]).length ? ` y desbloquear ${rewards(nx[0]).map(zName).join(' y ')}` : ''}.</p></div> : <p className="small"><b>Llegaste al nivel máximo.</b></p>}
+        <p className="small"><b>Te faltan {nx[0] - pts} ★</b> para {nx[1]}{rewards(nx[0]).length ? ` y desbloquear ${andList(rewards(nx[0]).map(zName))}` : ''}.</p></div> : <p className="small"><b>Llegaste al nivel máximo.</b></p>}
       <div className="card tight"><div className="ladder">{LEVELS.map((l, i) => { const stt = i < li ? 'done' : i === li ? 'now' : 'next', rw = rewards(l[0]);
         return <div key={l[1]} className={`rung ${stt}`}><span className="lv">{i < li ? '✓' : i + 1}</span>
           <div className="grow"><b>{l[1]}</b> <span className="small muted num">· {l[0]} ★</span>{stt === 'now' && <> <span className="chip pastel">Estás acá</span></>}
-            <div className="small muted">{rw.length ? 'Zumbido ' + rw.map(zName).join(' y ') : 'Clásico, corazones y estrellitas'}</div></div>
+            <div className="small muted">{rw.length ? (rw.length > 1 ? 'Zumbidos ' : 'Zumbido ') + andList(rw.map(zName)) : 'Clásico, corazones y estrellitas'}</div></div>
           <Svg className="rw" html={(rw.length ? rw : ['clasico']).map((k) => zIcon(k, 24)).join('')} /></div>; })}</div></div>
       <details className="card tight"><summary style={{ fontWeight: 700, cursor: 'pointer' }}>¿Cómo sumo estrellitas?</summary>
         <div className="list" style={{ marginTop: 6 }}>{Object.entries(POINTS).map(([k, [n, l]]) => <div key={k} className="li"><span className="grow">{l}</span><b className="num">+{n} ★</b></div>)}</div></details>

@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { avatar } from './avatarSvg';
-import { groupIconSvg } from './groupIcon';
+import { groupArtSvg } from './groupArt';
 import type { Group, Profile } from '../data';
 import { useStore } from '../store';
 
@@ -16,7 +16,7 @@ export function AvStack({ ids, size = 28 }: { ids: string[]; size?: number }) {
 }
 export function GroupPic({ g, size = 46 }: { g: Group; size?: number }) {
   if (g.photoUrl) return <span className="gph" style={{ width: size, height: size }}><img src={g.photoUrl} alt="" /></span>;
-  return <span style={{ display: 'inline-flex', flex: 'none' }} dangerouslySetInnerHTML={{ __html: groupIconSvg(g.icon, size) }} />;
+  return <span className="avb" style={{ width: size, height: size, background: '#FFFDF9' }} dangerouslySetInnerHTML={{ __html: groupArtSvg(g.icon, size) }} />;
 }
 export function Svg({ html, className }: { html: string; className?: string }) {
   return <span className={className} style={{ display: 'inline-flex' }} dangerouslySetInnerHTML={{ __html: html }} />;
