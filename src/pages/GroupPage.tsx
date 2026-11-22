@@ -6,7 +6,7 @@ import { Av, AvStack, GroupPic, I, Sheet, Svg, TopBar, copyText, shareText } fro
 import { playBuzz } from '../components/fx';
 import GroupImageEditor from '../components/GroupImageEditor';
 import { activePlan, doneThisPeriod, goalTxt, hasDonePlan, nextPlan, overdue, pointsOf, sinceLast } from '../lib/derive';
-import { PLANES, planTitle } from '../lib/logic/plan';
+import { PLANES, inviteText, planTitle } from '../lib/logic/plan';
 import { POINTS } from '../lib/logic/points';
 import { cap, fmtDay, iso, today } from '../lib/logic/dates';
 import RegalitoTab from './RegalitoTab';
@@ -85,9 +85,10 @@ export default function GroupPage({ onPropose }: { onPropose: (groupId: string) 
     {params.get('imagen') === '1' && <Sheet onClose={() => setParams({})}><GroupImageEditor g={g} /><button className="btn full" onClick={() => setParams({})}>Listo</button></Sheet>}
     {inviting && <Sheet onClose={() => setParams({})}>
       <h2>Invitá al grupo</h2>
-      <p className="muted small">Pegá este link en el grupo de WhatsApp. Quien lo abre se crea el perfil y queda adentro.</p>
-      <div className="alias"><span>{invite}</span><button className="btn sm" onClick={() => copyText(invite, toast)}>{I.copy} Copiar</button></div>
-      <button className="btn full" onClick={() => shareText(`Sumate a ${g.name} en Plancito: ${invite}`, toast)}>Compartir</button>
+      <p className="muted small">{g.kind === 'pareja' ? 'Mandale esto a tu pareja.' : 'Mandá esto al grupo de WhatsApp.'} Quien lo abre se crea el perfil y queda adentro.</p>
+      <div className="card tight" style={{ fontSize: 15 }}>{inviteText(g, invite)}</div>
+      <div className="grid2"><button className="btn ghost" onClick={() => copyText(inviteText(g, invite), toast)}>{I.copy} Copiar</button>
+        <button className="btn" onClick={() => shareText(inviteText(g, invite), toast)}>Compartir</button></div>
     </Sheet>}
   </>;
 

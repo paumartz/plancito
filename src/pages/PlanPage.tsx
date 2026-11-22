@@ -6,7 +6,7 @@ import { Av, AvStack, I, Sheet, TopBar, copyText, shareText } from '../component
 import { celebrate, starBurst } from '../components/fx';
 import { attendees, effBallots, effDone, planDays } from '../lib/derive';
 import {
-  COCINA, LUGARES, MOM, MOMENTOS, PLANES, closeCuando, closeDonde, emptyBallot, gcalUrl, leadPlan, lugaresFor, menusFor,
+  COCINA, LUGARES, inviteText, MOM, MOMENTOS, PLANES, closeCuando, closeDonde, emptyBallot, gcalUrl, leadPlan, lugaresFor, menusFor,
   planSentence, planTitle, planesFor, slotId, votersFor, type Ballot, type BallotDonde,
 } from '../lib/logic/plan';
 import { debtKey, settle } from '../lib/logic/split';
@@ -88,7 +88,7 @@ function PlanView({ p, g }: { p: Plan; g: Group }) {
   function Footer() {
     if (alone) return <div className="sticker bg-peach"><h3>Falta que se sume {g.kind === 'pareja' ? 'tu pareja' : 'alguien más'}</h3>
       <p className="small">La votación sigue abierta hasta que entre al grupo y responda. Mandale el link de invitación:</p>
-      <button className="btn" onClick={() => shareText(`Sumate a ${g.name} en Plancito: ${location.origin}/i/${g.inviteCode}?p=${p.id}`, toast)}>Mandar invitación</button></div>;
+      <button className="btn" onClick={() => shareText(inviteText(g, `${location.origin}/i/${g.inviteCode}?p=${p.id}`, true), toast)}>Mandar invitación</button></div>;
     const done = att.filter((x) => ed.includes(x)), missing = att.filter((x) => x !== me && !ed.includes(x));
     return <>
       <div className="card tight"><div className="row between"><span className="small" style={{ fontWeight: 700 }}>Respondieron {done.length} de {att.length}</span><AvStack ids={done} size={24} /></div>
