@@ -11,6 +11,7 @@ import { POINTS } from '../lib/logic/points';
 import { cap, fmtDay, iso, today } from '../lib/logic/dates';
 import RegalitoTab from './RegalitoTab';
 import PuntoMedio from '../components/PuntoMedio';
+import { monthName } from '../lib/mep';
 
 export default function GroupPage({ onPropose }: { onPropose: (groupId: string) => void }) {
   const { id } = useParams();
@@ -102,7 +103,7 @@ export default function GroupPage({ onPropose }: { onPropose: (groupId: string) 
 }
 
 function Ajustes({ g }: { g: Group }) {
-  const { toast, reload } = useStore();
+  const { toast, reload, mep } = useStore();
   const [spot, setSpot] = useState('');
   const [spotType, setSpotType] = useState<'resto' | 'delivery'>('resto');
   const save = async (patch: Parameters<typeof api.updateGroup>[1]) => {
@@ -137,8 +138,10 @@ function Ajustes({ g }: { g: Group }) {
           <button key={k} className={g.budgetMode === k ? 'on' : ''} onClick={() => save({ budgetMode: k })}>{l}</button>)}</div>
         <div className="grid2">
           <div className="field"><label htmlFor="bDef">Presupuesto por regalo (en pesos)</label><input id="bDef" className="inp num" inputMode="numeric" defaultValue={g.budgetDefault} onBlur={(e) => { const v = Number(e.target.value.replace(/[^\d]/g, '')); if (v && v !== g.budgetDefault) save({ budgetDefault: v }); }} /></div>
-          <div className="field"><label htmlFor="uRate">Cotización del dólar del grupo</label><input id="uRate" className="inp num" inputMode="numeric" defaultValue={g.usdRate} onBlur={(e) => { const v = Number(e.target.value.replace(/[^\d]/g, '')); if (v && v !== g.usdRate) save({ usdRate: v }); }} /></div>
-        </div></>}
+          <div className="field"><label htmlFor="uRate">Cotización de respaldo</label><input id="uRate" className="inp num" inputMode="numeric" defaultValue={g.usdRate} onBlur={(e) => { const v = Number(e.target.value.replace(/[^\d]/g, '')); if (v && v !== g.usdRate) save({ usdRate: v }); }} /></div>
+        </div>
+        <p className="small muted">{mep ? <>Dólar MEP promedio de {monthName(mep.month)}: <b>${mep.rate.toLocaleString('es-AR')}</b> ({mep.days} días, fuente ArgentinaDatos). Se actualiza solo; la de respaldo se usa solo si no se puede consultar.</>
+          : 'No pudimos consultar el dólar MEP ahora: se usa la cotización de respaldo.'}</p></>}
     </div>}
     <div className="card"><h3>Planes que les gustan</h3><p className="small muted">Aparecen primero cuando votan qué hacer.</p>
       <div className="row wrap" style={{ gap: 7 }}>{Object.entries(PLANES).map(([k, v]) => { const on = g.likes.includes(k);

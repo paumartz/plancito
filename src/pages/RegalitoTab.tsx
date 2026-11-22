@@ -6,6 +6,7 @@ import { starBurst } from '../components/fx';
 import { cap, fmtDay, iso, money, today } from '../lib/logic/dates';
 import { adjustForInflation, budgetARS, daysToBirthday, fetchInflationSince, fmtBudget, majority, nextBirthday, shareOf } from '../lib/logic/regalito';
 import { POINTS } from '../lib/logic/points';
+import { monthName } from '../lib/mep';
 
 export default function RegalitoTab({ g }: { g: Group }) {
   const st = useStore();
@@ -48,12 +49,13 @@ export default function RegalitoTab({ g }: { g: Group }) {
 }
 
 function OneRegalito({ g, r, save }: { g: Group; r: Regalito; save: (fn: () => Promise<unknown>, ok?: string) => Promise<void> }) {
-  const { userId, profiles, nick, toast } = useStore();
+  const { userId, profiles, nick, toast, mep, usdRate } = useStore();
   const me = userId!;
+  const rate = usdRate(g);
   const bp = profiles[r.bdayUser];
   const el = g.members.filter((m) => m !== r.bdayUser), need = majority(el.length);
   const days = bp?.birthday ? daysToBirthday(bp.birthday, today()) : 0;
-  const bA = budgetARS(r.budget.amount, r.budget.mode, g.usdRate);
+  const bA = budgetARS(r.budget.amount, r.budget.mode, rate);
   const chosen = r.ideas.find((i) => i.id === r.chosenIdea);
   const share = shareOf(r.cost || 0, el.length);
   const [sheet, setSheet] = useState<null | { kind: 'idea'; title?: string } | { kind: 'buy' } | { kind: 'infl'; pct: string }>(null);
@@ -97,7 +99,7 @@ function OneRegalito({ g, r, save }: { g: Group; r: Regalito; save: (fn: () => P
     <section className="sec"><div className="sec-h"><h2>Presupuesto</h2><span className="muted small num">por persona ≈ {fmtBudget(r.budget.amount / el.length, r.budget.mode)}</span></div>
       <div className="card tight">
         <div className="hand num" style={{ fontSize: 32 }}>{fmtBudget(r.budget.amount, r.budget.mode)}</div>
-        <p className="small muted">{r.budget.mode === 'usd' ? `≈ ${money(bA)} a $${g.usdRate.toLocaleString('es-AR')} por dólar (cotización del grupo, en Ajustes).` : `Definido en ${fmtDay(r.budget.since, { month: 'long', year: 'numeric' })}. Se puede ajustar por inflación (IPC del INDEC).`}</p>
+        <p className="small muted">{r.budget.mode === 'usd' ? `≈ ${money(bA)} al dólar ${mep ? `MEP promedio de ${monthName(mep.month)} ($${rate.toLocaleString('es-AR')})` : `de respaldo del grupo ($${rate.toLocaleString('es-AR')}), porque no pudimos consultar el MEP`}.` : `Definido en ${fmtDay(r.budget.since, { month: 'long', year: 'numeric' })}. Se puede ajustar por inflación (IPC del INDEC).`}</p>
         {r.proposal ? <div className="sticker bg-sky"><p><b>{r.proposal.pct ? `Inflación acumulada: ${r.proposal.pct}%.` : ''}</b> ¿Lo actualizamos a <b className="num">{fmtBudget(r.proposal.amount, r.budget.mode)}</b>?</p>
           <p className="small muted">Hacen falta {need} de {el.length}. A favor {yes} · en contra {no}</p>
           {myBudgetVote ? <p className="small" style={{ fontWeight: 700 }}>Ya votaste {myBudgetVote.yes ? 'a favor' : 'en contra'}.</p>

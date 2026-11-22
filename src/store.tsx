@@ -3,6 +3,7 @@ import { api, type Buzz, type Group, type Plan, type PointEntry, type Profile, t
 import { daysToBirthday } from './lib/logic/regalito';
 import { today } from './lib/logic/dates';
 import { playBuzz } from './components/fx';
+import { fetchMep, type Mep } from './lib/mep';
 
 interface State {
   ready: boolean;
@@ -22,6 +23,9 @@ interface Store extends State {
   group: (id: string) => Group | undefined;
   seenBuzz: (id: string) => boolean;
   markBuzzSeen: (id: string) => void;
+  mep: Mep | null;
+  /** Cotización a usar: MEP promedio del mes, o la de respaldo del grupo si no se pudo consultar. */
+  usdRate: (g: Group) => number;
 }
 
 const Ctx = createContext<Store | null>(null);
@@ -35,6 +39,9 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   const [toastMsg, setToast] = useState<string | null>(null);
   const [seen, setSeen] = useState<string[]>(readSeen);
   const toastT = useRef<ReturnType<typeof setTimeout>>();
+  const [mep, setMep] = useState<Mep | null>(null);
+  const mepRef = useRef<Mep | null>(null);
+  useEffect(() => { fetchMep().then((m) => { mepRef.current = m; setMep(m); }); }, []);
 
   const toast = useCallback((msg: string) => {
     setToast(msg); clearTimeout(toastT.current); toastT.current = setTimeout(() => setToast(null), 2600);
@@ -59,7 +66,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         for (const { g, m, d } of toCreate) {
           const year = new Date(t.getTime() + d * 864e5).getFullYear();
           if (!regalitos.some((r) => r.groupId === g.id && r.bdayUser === m && r.year === year))
-            await api.createRegalito(g.id, m, year, { amount: g.budgetMode === 'usd' ? Math.round(g.budgetDefault / g.usdRate) : g.budgetDefault, mode: g.budgetMode }).catch(() => undefined);
+            await api.createRegalito(g.id, m, year, { amount: g.budgetMode === 'usd' ? Math.round(g.budgetDefault / (mepRef.current?.rate || g.usdRate)) : g.budgetDefault, mode: g.budgetMode }).catch(() => undefined);
         }
         regalitos = await api.listRegalitos(ids);
       }
@@ -102,7 +109,9 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     group: (id: string) => s.groups.find((g) => g.id === id),
     seenBuzz: (id: string) => seen.includes(id),
     markBuzzSeen,
-  }), [s, reload, toast, seen, markBuzzSeen]);
+    mep,
+    usdRate: (g: Group) => mep?.rate || g.usdRate,
+  }), [s, reload, toast, seen, markBuzzSeen, mep]);
 
   return (
     <Ctx.Provider value={value}>
