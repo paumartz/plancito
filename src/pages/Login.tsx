@@ -14,7 +14,13 @@ export default function Login() {
     try {
       const r = await api.signIn(email.trim());
       setState(r === 'sent' ? 'sent' : 'idle');
-    } catch (ex) { setErr((ex as Error).message); setState('idle'); }
+    } catch (ex) {
+      const m = (ex as Error).message || '';
+      setErr(/rate limit|too many/i.test(m)
+        ? 'Pediste varios links seguidos y el servidor de mails puso una pausa. Usá el último mail que te llegó (sirve por una hora) o probá de nuevo en un rato.'
+        : m);
+      setState('idle');
+    }
   }
 
   return (
