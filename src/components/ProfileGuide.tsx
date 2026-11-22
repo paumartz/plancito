@@ -23,7 +23,7 @@ export default function ProfileGuide() {
   if (typeof flags.hiddenUntil === 'number' && Date.now() < flags.hiddenUntil) return null;
 
   const steps: { id: string; done: boolean; title: string; why: string; to: string }[] = [
-    { id: 'nombre', done: !!(me.name.trim() && me.nick.trim()), title: 'Poné tu nombre y apodo', why: 'Así te reconocen en el grupo.', to: '/perfil#pfnick' },
+    { id: 'nombre', done: !!(me.name.trim() || me.nick.trim()), title: 'Poné tu nombre', why: 'Así te reconocen en el grupo. El apodo es opcional.', to: '/perfil#pfname' },
     { id: 'avatar', done: !!flags.avatar, title: 'Armá tu avatar', why: 'Pelo, lentes, accesorio, mascota…', to: '/perfil#avatar' },
     { id: 'alias', done: !!me.alias.trim(), title: 'Sumá tu alias', why: 'Para que te puedan pagar sin preguntarte.', to: '/perfil#pfalias' },
     { id: 'cumple', done: !!me.birthday, title: 'Cargá tu cumple', why: 'Para que el grupo organice tu regalito.', to: '/perfil#pfBday' },
