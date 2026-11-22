@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { enablePush, pushState, type PushState } from '../lib/push';
 import { markGuide } from '../components/ProfileGuide';
+import { wishJoin, wishTitle, wishUrl } from '../lib/wish';
 import { useLocation } from 'react-router-dom';
 import { api, type Profile as P } from '../data';
 import { useStore } from '../store';
@@ -18,6 +19,8 @@ const andList = (xs: string[]) => xs.length < 2 ? xs.join('') : xs.slice(0, -1).
 export default function Profile() {
   const { me, userId, points, reload, toast } = useStore();
   const [tab, setTab] = useState('pelo');
+  const [custom, setCustom] = useState(false);
+  const [wishLink, setWishLink] = useState('');
   const [push, setPush] = useState<PushState | null>(null);
   const [wish, setWish] = useState('');
   useEffect(() => { pushState().then(setPush).catch(() => setPush('unsupported')); }, []);
@@ -52,7 +55,10 @@ export default function Profile() {
       <div className="tabs">{AV_TABS.map(([k, l]: string[]) => <button key={k} className={`tab ${tab === k ? 'on' : ''}`} onClick={() => setTab(k)}>{l}</button>)}</div>
       <div className="avpicker">{(AV_OPTS as Record<string, string[][]>)[tab].map(([v, l]) =>
         <button key={v} className={(me.avatar as unknown as Record<string, string>)[tab] === v ? 'on' : ''} onClick={() => setAv(tab as keyof AvatarOpts, v)}>
-          <Svg html={avatar({ ...me.avatar, [tab]: v }, 54)} />{l}</button>)}</div>
+          <Svg html={avatar({ ...me.avatar, [tab]: v }, 54)} />{l}</button>)}
+        {tab === 'color' && <button className={me.avatar.color === 'custom' ? 'on' : ''} onClick={() => setCustom(true)}>
+          <Svg html={avatar({ ...me.avatar, color: 'custom', c1: me.avatar.c1 || '#7C8B4F', c2: me.avatar.c2 }, 54)} />Tu color</button>}</div>
+      {tab === 'color' && custom && <CustomColor av={me.avatar} onSave={(c1, c2) => { markGuide(userId, 'avatar'); save({ avatar: { ...me.avatar, color: 'custom', c1, c2 } }); }} />}
     </section>
 
     <section className="sec"><h2>Tus datos</h2>
@@ -79,10 +85,11 @@ export default function Profile() {
     </section>
 
     <section className="sec"><h2>Tu lista de deseos</h2><p className="small muted" style={{ marginTop: -6 }}>La ven tus grupos cuando se acerca tu cumple.</p>
-      <div className="card tight">{me.wishlist.length > 0 && <div className="list">{me.wishlist.map((w, i) => <div key={i} className="li"><span className="grow">{w}</span>
+      <div className="card tight">{me.wishlist.length > 0 && <div className="list">{me.wishlist.map((w, i) => <div key={i} className="li"><span className="grow">{wishTitle(w)}{wishUrl(w) && <> · <a className="link small" href={wishUrl(w)!} target="_blank" rel="noopener">Ver</a></>}</span>
         <button className="link small" onClick={() => save({ wishlist: me.wishlist.filter((_, j) => j !== i) })}>Quitar</button></div>)}</div>}
-        <div className="row"><input className="inp" value={wish} onChange={(e) => setWish(e.target.value)} placeholder="Algo que te gustaría…" />
-          <button className="btn soft" onClick={() => { if (wish.trim()) { save({ wishlist: [...me.wishlist, wish.trim()] }); setWish(''); } }}>Sumar</button></div></div>
+        <input className="inp" value={wish} onChange={(e) => setWish(e.target.value)} placeholder="Algo que te gustaría…" />
+        <div className="row"><input className="inp" value={wishLink} onChange={(e) => setWishLink(e.target.value)} placeholder="Link (opcional)" inputMode="url" />
+          <button className="btn soft" onClick={() => { if (wish.trim()) { save({ wishlist: [...me.wishlist, wishJoin(wish.trim(), wishLink.trim())] }); setWish(''); setWishLink(''); } }}>Sumar</button></div></div>
     </section>
     <section className="sec"><h2>¿O que le pregunten a alguien?</h2><p className="small muted" style={{ marginTop: -6 }}>Si no tenés ganas de armar lista, dejá a alguien que sepa qué te gustaría. Lo ven solo cuando se organiza tu regalo.</p>
       <div className="card tight">
@@ -90,7 +97,11 @@ export default function Profile() {
           <div className="field"><label htmlFor="acName">Nombre</label><input id="acName" className="inp" defaultValue={me.askContact.name || ''} placeholder="Ej: Fran" onBlur={(e) => save({ askContact: { ...me.askContact, name: e.target.value.trim() } })} /></div>
           <div className="field"><label htmlFor="acRel">Quién es</label><input id="acRel" className="inp" defaultValue={me.askContact.rel || ''} placeholder="Ej: Mi novio" onBlur={(e) => save({ askContact: { ...me.askContact, rel: e.target.value.trim() } })} /></div>
         </div>
-        <div className="field"><label htmlFor="acPhone">WhatsApp</label><input id="acPhone" className="inp" inputMode="tel" defaultValue={me.askContact.phone || ''} placeholder="+54 9 11 ..." onBlur={(e) => save({ askContact: { ...me.askContact, phone: e.target.value.trim() } })} /></div>
+        <div className="seg" role="group" aria-label="Cómo contactarle">{([['wa', 'WhatsApp'], ['ig', 'Instagram']] as const).map(([k, l]) =>
+          <button key={k} className={(me.askContact.via || 'wa') === k ? 'on' : ''} onClick={() => save({ askContact: { ...me.askContact, via: k } })}>{l}</button>)}</div>
+        {(me.askContact.via || 'wa') === 'wa'
+          ? <div className="field"><label htmlFor="acPhone">WhatsApp</label><input id="acPhone" key="wa" className="inp" inputMode="tel" defaultValue={me.askContact.phone || ''} placeholder="+54 9 11 ..." onBlur={(e) => save({ askContact: { ...me.askContact, phone: e.target.value.trim() } })} /></div>
+          : <div className="field"><label htmlFor="acIg">Instagram</label><input id="acIg" key="ig" className="inp" defaultValue={me.askContact.ig || ''} placeholder="@usuario" autoCapitalize="none" onBlur={(e) => save({ askContact: { ...me.askContact, ig: e.target.value.trim().replace(/^@/, '') } })} /></div>}
       </div>
     </section>
 
@@ -119,4 +130,21 @@ export default function Profile() {
 
     <button className="btn ghost full" onClick={() => api.signOut()}>Cerrar sesión</button>
   </>;
+}
+
+/** Elegir el color de la remera: liso o degradé, con el selector de color del teléfono. */
+function CustomColor({ av, onSave }: { av: AvatarOpts; onSave: (c1: string, c2?: string) => void }) {
+  const [grad, setGrad] = useState(!!av.c2);
+  const [c1, setC1] = useState(av.c1 || '#7C8B4F');
+  const [c2, setC2] = useState(av.c2 || '#C9B8F5');
+  return <div className="card tight">
+    <div className="row between wrap"><Svg html={avatar({ ...av, color: 'custom', c1, c2: grad ? c2 : undefined }, 72)} />
+      <div className="seg" style={{ flex: 1, minWidth: 180 }}>{([[false, 'Liso'], [true, 'Degradé']] as const).map(([v, l]) =>
+        <button key={l} className={grad === v ? 'on' : ''} onClick={() => setGrad(v)}>{l}</button>)}</div></div>
+    <div className="row wrap" style={{ gap: 12 }}>
+      <label className="colorpick">Color{grad ? ' 1' : ''}<input type="color" value={c1} onChange={(e) => setC1(e.target.value)} /></label>
+      {grad && <label className="colorpick">Color 2<input type="color" value={c2} onChange={(e) => setC2(e.target.value)} /></label>}
+    </div>
+    <button className="btn" onClick={() => onSave(c1, grad ? c2 : undefined)}>Usar este color</button>
+  </div>;
 }

@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { api, type Group } from '../data';
 import { useStore } from '../store';
@@ -111,6 +111,16 @@ export default function GroupPage({ onPropose }: { onPropose: (groupId: string) 
 
 function Ajustes({ g }: { g: Group }) {
   const { toast, reload, mep } = useStore();
+  // Gustos: se marcan al instante y se guardan un momento después (sin esperar a recargar todo).
+  const [likes, setLikes] = useState<string[]>(g.likes);
+  const likeTimer = useRef<ReturnType<typeof setTimeout>>();
+  const pendingLikes = useRef(false);
+  useEffect(() => { if (!pendingLikes.current) setLikes(g.likes); }, [g.likes]);
+  const toggleLike = (k: string) => {
+    const next = likes.includes(k) ? likes.filter((x) => x !== k) : [...likes, k];
+    setLikes(next); pendingLikes.current = true; clearTimeout(likeTimer.current);
+    likeTimer.current = setTimeout(() => { api.updateGroup(g.id, { likes: next }).then(() => { pendingLikes.current = false; reload(); }).catch((e) => { pendingLikes.current = false; toast('No se pudo guardar: ' + (e as Error).message); }); }, 600);
+  };
   const [spot, setSpot] = useState('');
   const [spotType, setSpotType] = useState<'resto' | 'delivery'>('resto');
   const save = async (patch: Parameters<typeof api.updateGroup>[1]) => {
@@ -140,8 +150,8 @@ function Ajustes({ g }: { g: Group }) {
           : 'No pudimos consultar el dólar MEP ahora: se usa la cotización de respaldo.'}</p></>}
     </div>}
     <div className="card"><h3>Planes que les gustan</h3><p className="small muted">Aparecen primero cuando votan qué hacer.</p>
-      <div className="row wrap" style={{ gap: 7 }}>{Object.entries(PLANES).map(([k, v]) => { const on = g.likes.includes(k);
-        return <button key={k} className={on ? 'vchip on' : 'vchip'} onClick={() => save({ likes: on ? g.likes.filter((x) => x !== k) : [...g.likes, k] })}>{on ? '✓ ' : ''}{v.l}</button>; })}</div></div>
+      <div className="row wrap" style={{ gap: 7 }}>{Object.entries(PLANES).map(([k, v]) => { const on = likes.includes(k);
+        return <button key={k} className={on ? 'vchip on' : 'vchip'} onClick={() => toggleLike(k)}>{on ? '✓ ' : ''}{v.l}</button>; })}</div></div>
     <div className="card"><h3>Lugares de siempre</h3><p className="small muted">El bar donde siempre terminan o el delivery de confianza. Aparecen como opción al votar.</p>
       {g.spots.length > 0 && <div className="list">{g.spots.map((s, i) => <div key={i} className="li"><span className="grow"><b>{s.name}</b> <span className="small muted">· {s.type === 'delivery' ? 'Delivery' : 'Resto / bar'}</span></span>
         <button className="link small" onClick={() => save({ spots: g.spots.filter((_, j) => j !== i) })}>Quitar</button></div>)}</div>}

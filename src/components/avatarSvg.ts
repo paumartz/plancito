@@ -1,11 +1,11 @@
 // @ts-nocheck — dibujo del avatar portado tal cual del prototipo (prototype/index.html)
-export interface AvatarOpts { pelo: string; colorPelo: string; cara: string; lentes: string; acc: string; mascota?: string; color: string }
+export interface AvatarOpts { pelo: string; colorPelo: string; cara: string; lentes: string; acc: string; mascota?: string; color: string; /** remera a elección */ c1?: string; c2?: string }
 export const AV_OPTS = {
   pelo:[['melena','Melena'],['rulos','Rulos'],['rulosLargos','Rulos largos'],['corto','Corto'],['dosAguas','Dos aguas'],['mediaColita','Media colita'],['rodetes','Rodetes'],['afro','Afro'],['largo','Largo'],['pelado','Pelado']],
-  colorPelo:[['ink','Negro'],['castano','Castaño'],['rubio','Rubio'],['rojo','Colorado'],['linea','Solo línea']],
+  colorPelo:[['ink','Negro'],['castano','Castaño'],['rubio','Rubio'],['rojo','Colorado']],
   cara:[['feliz','Feliz'],['sonrisa','Sonrisa'],['guino','Guiño'],['sorpresa','Sorpresa'],['meh','Meh'],['dormido','Fiaca'],['lengua','Lengua afuera'],['ojosBlanco','Ojos en blanco']],
   lentes:[['no','Sin lentes'],['redondos','Redondos'],['cuadrados','Cuadrados'],['sol','De sol']],
-  acc:[['nada','Nada'],['flor','Flor'],['gorrito','Gorrito'],['gorra','Gorra'],['auris','Auris'],['aro','Aro'],['bigote','Bigote'],['mono','Moño'],['corona','Corona'],['mate','Mate'],['camara','Cámara']],
+  acc:[['nada','Nada'],['flor','Flor'],['gorrito','Gorrito'],['gorra','Gorra'],['auris','Auris'],['aro','Aros'],['barbaCorta','Barba corta'],['barbaLarga','Barba larga'],['pelota','Pelota'],['bigote','Bigote'],['mono','Moño'],['corona','Corona'],['mate','Mate'],['camara','Cámara']],
   mascota:[['nada','Ninguna'],['planta','Planta'],['gato','Gato'],['perro','Perro']],
   color:[['sunset','Atardecer'],['mint','Menta'],['berry','Frutilla'],['sky','Cielo'],['citrus','Limón'],['musgo','Verde musgo'],['rojo','Rojo'],['bordo','Bordó'],['celeste','Celeste']],
 };
@@ -13,7 +13,7 @@ export const AV_TABS = [['pelo','Pelo'],['colorPelo','Color de pelo'],['cara','E
 export const TEMPLATES: AvatarOpts[] = [
   {pelo:'melena',colorPelo:'castano',cara:'feliz',lentes:'redondos',acc:'flor',color:'sunset'},
   {pelo:'rulos',colorPelo:'ink',cara:'meh',lentes:'no',acc:'nada',color:'sunset'},
-  {pelo:'corto',colorPelo:'linea',cara:'sonrisa',lentes:'no',acc:'gorrito',color:'sky'},
+  {pelo:'corto',colorPelo:'rubio',cara:'sonrisa',lentes:'no',acc:'gorrito',color:'sky'},
   {pelo:'afro',colorPelo:'ink',cara:'sorpresa',lentes:'no',acc:'aro',color:'berry'},
   {pelo:'rodetes',colorPelo:'ink',cara:'guino',lentes:'cuadrados',acc:'nada',color:'mint'},
   {pelo:'largo',colorPelo:'rubio',cara:'dormido',lentes:'no',acc:'auris',color:'citrus',mascota:'planta'},
@@ -24,7 +24,8 @@ const GRADS = { sunset:['#FF8A5B','#F7A8C4','#B79CFF'], mint:['#B6E89C','#FBE38A
 const HAIR = { ink:'#241B19', castano:'#6B3F2A', rubio:'#E2B256', rojo:'#C4532A', linea:'#FFFDF9' };
 let avN = 0;
 export function avatar(a, size=48, o={}){
-  const id = (o.pfx || 'av') + (++avN), g = GRADS[a.color] || GRADS.sunset, hc = HAIR[a.colorPelo] || HAIR.ink, K = '#2A1F1D';
+  const mixHex = (x, y) => '#' + [1, 3, 5].map((i) => Math.round((parseInt(x.slice(i, i + 2), 16) + parseInt(y.slice(i, i + 2), 16)) / 2).toString(16).padStart(2, '0')).join('');
+  const id = (o.pfx || 'av') + (++avN), g = a.color === 'custom' && a.c1 ? (a.c2 ? [a.c1, mixHex(a.c1, a.c2), a.c2] : [a.c1, a.c1, a.c1]) : (GRADS[a.color] || GRADS.sunset), hc = HAIR[a.colorPelo] || HAIR.ink, K = '#2A1F1D';
   const hs = `fill="${hc}" stroke="${K}" stroke-width="2" stroke-linejoin="round"`;
   const L = `fill="none" stroke="${K}" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"`;
   const fringe = `<path d="M31 45 C33 31 44 26 52 27 C61 27 69 34 69 45 C62 40 56 35 50 35 C46 39 38 43 31 45Z" ${hs}/>`;
@@ -72,7 +73,10 @@ export function avatar(a, size=48, o={}){
     gorrito:`<path d="M30 37 C33 21 55 14 71 21 C79 25 84 33 87 43 L71 34 C59 29 43 30 30 37Z" fill="#BCD7EA" stroke="${K}" stroke-width="2" stroke-linejoin="round"/><path d="M29 38 C42 31 58 30 71 35" ${L} stroke-width="3.2"/><circle cx="87.5" cy="45" r="4.2" fill="#FFFDF9" stroke="${K}" stroke-width="1.8"/>`,
     gorra:`<path d="M30 41 C30 27 41 22 50 22 C60 22 70 28 70 41 Z" fill="#E8573A" stroke="${K}" stroke-width="2" stroke-linejoin="round"/><path d="M64 40 C72 39 81 40 85 44 C78 45 70 44 64 43Z" fill="#E8573A" stroke="${K}" stroke-width="2" stroke-linejoin="round"/>`,
     auris:`<path d="M28 49 C27 22 73 22 72 49" ${L} stroke-width="3"/><rect x="23" y="44" width="9" height="13" rx="4" fill="#D3C4F6" stroke="${K}" stroke-width="1.8"/><rect x="68" y="44" width="9" height="13" rx="4" fill="#D3C4F6" stroke="${K}" stroke-width="1.8"/>`,
-    aro:`<circle cx="30.5" cy="57" r="2.6" fill="none" stroke="#D99A2B" stroke-width="2"/>`,
+    aro:`<circle cx="30.5" cy="57" r="2.6" fill="none" stroke="#D99A2B" stroke-width="2"/><circle cx="69.5" cy="57" r="2.6" fill="none" stroke="#D99A2B" stroke-width="2"/>`,
+    barbaCorta:`<path d="M31 50 C32 63 41 70 50 70 C59 70 68 63 69 50 C66 57 60 61.5 50 61.5 C40 61.5 34 57 31 50Z" ${hs}/>`,
+    barbaLarga:`<path d="M30 49 C30 66 39 84 50 87 C61 84 70 66 70 49 C66 57 60 61.5 50 61.5 C40 61.5 34 57 30 49Z" ${hs}/>`,
+    pelota:`<g transform="translate(21 86)"><circle r="11" fill="#FFFFFF" stroke="${K}" stroke-width="2"/><path d="M0 -4.6 L4.4 -1.4 L2.7 3.7 L-2.7 3.7 L-4.4 -1.4 Z" fill="${K}"/><path d="M0 -4.6 V-11 M4.4 -1.4 L10.4 -3.4 M2.7 3.7 L6.4 8.8 M-2.7 3.7 L-6.4 8.8 M-4.4 -1.4 L-10.4 -3.4" stroke="${K}" stroke-width="1.6" fill="none"/></g>`,
     mate:`<g transform="translate(22 88)"><path d="M5 -13 L10 -26" stroke="#9AA3AD" stroke-width="2.4" stroke-linecap="round"/><path d="M-6.5 -12 C-10 -3 -7 7 0 8.5 C7 7 10 -3 6.5 -12 Z" fill="#C98B5B" stroke="${K}" stroke-width="2" stroke-linejoin="round"/><ellipse cx="0" cy="-12" rx="6.5" ry="2.2" fill="#8DBE6A" stroke="${K}" stroke-width="1.6"/><circle cx="8.5" cy="1" r="3.8" fill="#FFFDF9" stroke="${K}" stroke-width="1.6"/></g>`,
     camara:`<g><circle cx="31" cy="56" r="4.2" fill="#FFFDF9" stroke="${K}" stroke-width="1.8"/><circle cx="69" cy="56" r="4.2" fill="#FFFDF9" stroke="${K}" stroke-width="1.8"/><rect x="37" y="35.5" width="8" height="5" rx="1.2" fill="#BCD7EA" stroke="${K}" stroke-width="1.8"/><rect x="32" y="39" width="36" height="19" rx="4" fill="#BCD7EA" stroke="${K}" stroke-width="2"/><circle cx="51" cy="48.5" r="7.2" fill="#FFFDF9" stroke="${K}" stroke-width="2"/><circle cx="51" cy="48.5" r="3.8" fill="${K}"/><circle cx="52.4" cy="47.1" r="1.1" fill="#FFFDF9"/><circle cx="62.5" cy="43" r="1.5" fill="#E8573A"/></g>`,
     mono:`<g transform="translate(64 27) rotate(18)"><path d="M0 0 C-4 -7 -13 -7 -13 0 C-13 7 -4 7 0 0 Z M0 0 C4 -7 13 -7 13 0 C13 7 4 7 0 0 Z" fill="#F6B5C6" stroke="${K}" stroke-width="1.8" stroke-linejoin="round"/><circle r="2.8" fill="#F48FA3" stroke="${K}" stroke-width="1.6"/></g>`,

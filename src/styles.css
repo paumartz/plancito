@@ -328,3 +328,10 @@ input[type="date"].inp{display:block;width:100%;min-width:0;-webkit-appearance:n
 .guide-row{width:100%;background:none;border:0;border-top:1.5px solid var(--line);padding:10px 0;display:flex;align-items:center;gap:12px;color:inherit}
 .guide-row:first-child{border-top:0}
 .guide-row .cta{font-size:20px;font-weight:800;color:var(--tomato)}
+
+/* opciones del avatar: fila deslizable, sin filas a medio completar */
+.avpicker{display:flex;grid-template-columns:none;overflow-x:auto;gap:8px;padding-bottom:6px;scroll-snap-type:x mandatory;scrollbar-width:none;margin-inline:-2px;padding-inline:2px}
+.avpicker::-webkit-scrollbar{display:none}
+.avpicker button{flex:0 0 84px;scroll-snap-align:start}
+.colorpick{display:flex;align-items:center;gap:8px;font-weight:700;font-size:13px}
+.colorpick input{width:44px;height:44px;border:1.5px solid var(--line);border-radius:12px;padding:2px;background:var(--card)}

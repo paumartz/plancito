@@ -7,6 +7,7 @@ import { cap, fmtDay, iso, money, today } from '../lib/logic/dates';
 import { adjustForInflation, budgetARS, daysToBirthday, fetchInflationSince, fmtBudget, majority, nextBirthday, shareOf } from '../lib/logic/regalito';
 import { POINTS } from '../lib/logic/points';
 import { monthName } from '../lib/mep';
+import { wishTitle, wishUrl } from '../lib/wish';
 
 export default function RegalitoTab({ g }: { g: Group }) {
   const st = useStore();
@@ -109,11 +110,13 @@ function OneRegalito({ g, r, save }: { g: Group; r: Regalito; save: (fn: () => P
     </section>
 
     <section className="sec"><h2>¿Qué le gustaría a {nick(r.bdayUser)}?</h2>
-      {(bp?.wishlist || []).length > 0 && <div className="card tight"><span className="eyebrow">Su lista de deseos</span><div className="list">{bp!.wishlist.map((w) => <div key={w} className="li"><span className="grow">{w}</span>
-        {r.status === 'votando' && <button className="link small" onClick={() => setSheet({ kind: 'idea', title: w })}>Proponer</button>}</div>)}</div></div>}
+      {(bp?.wishlist || []).length > 0 && <div className="card tight"><span className="eyebrow">Su lista de deseos</span><div className="list">{bp!.wishlist.map((w) => <div key={w} className="li"><span className="grow">{wishTitle(w)}{wishUrl(w) && <> · <a className="link small" href={wishUrl(w)!} target="_blank" rel="noopener">Ver</a></>}</span>
+        {r.status === 'votando' && <button className="link small" onClick={() => setSheet({ kind: 'idea', title: wishTitle(w) })}>Proponer</button>}</div>)}</div></div>}
       {c.name && <div className="sticker bg-lilac"><span className="eyebrow" style={{ color: 'inherit' }}>{(bp?.wishlist || []).length ? 'Si tienen dudas, pregúntenle a' : `${nick(r.bdayUser)} no dejó lista. Pregúntenle a`}</span>
         <div><h3 style={{ fontSize: 20 }}>{c.name}</h3><p className="small muted">{c.rel || 'Alguien de confianza'} · sabe qué le gustaría</p></div>
-        {c.phone && <><div className="alias"><span>{c.phone}</span><button className="btn sm" onClick={() => copyText(c.phone!, toast)}>{I.copy} Copiar</button></div>
+        {c.via === 'ig' && c.ig && <><div className="alias"><span>@{c.ig}</span><button className="btn sm" onClick={() => copyText('@' + c.ig, toast)}>{I.copy} Copiar</button></div>
+          <a className="btn" href={`https://instagram.com/${encodeURIComponent(c.ig)}`} target="_blank" rel="noopener">Escribirle por Instagram</a></>}
+        {c.via !== 'ig' && c.phone && <><div className="alias"><span>{c.phone}</span><button className="btn sm" onClick={() => copyText(c.phone!, toast)}>{I.copy} Copiar</button></div>
           <a className="btn" href={`https://wa.me/${c.phone.replace(/\D/g, '')}`} target="_blank" rel="noopener">Escribirle por WhatsApp</a></>}</div>}
       {!(bp?.wishlist || []).length && !c.name && <div className="empty">{nick(r.bdayUser)} no dejó lista ni contacto. Propongan ideas abajo.</div>}
     </section>

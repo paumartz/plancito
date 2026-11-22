@@ -13,7 +13,7 @@ export interface Profile {
   avatar: AvatarOpts;
   zumbido: { style: string; msg: string; sound: boolean };
   wishlist: string[];
-  askContact: { name?: string; rel?: string; phone?: string };
+  askContact: { name?: string; rel?: string; phone?: string; ig?: string; via?: 'wa' | 'ig' };
 }
 
 export interface Group {
