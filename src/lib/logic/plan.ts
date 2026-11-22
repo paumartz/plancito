@@ -181,12 +181,6 @@ export function shareText(p: Proposed, link: string, days: { id: string; phrase:
 }
 
 /** Mensaje para invitar a alguien al grupo por WhatsApp. */
-export function inviteText(g: { name: string; kind: string; members: string[] }, link: string, fromPlan = false) {
-  const couple = g.kind === 'pareja';
-  if (fromPlan) return couple
-    ? `Te armé un plancito 💛 Sumate a Plancito así lo votamos: ${link}`
-    : `¡Armé un plancito! 🙌 Sumate a "${g.name}" en Plancito para votar cuándo y qué hacemos: ${link}`;
-  return couple
-    ? `¡Sumate a Plancito así hacemos más plancitos juntos! 💛 ${link}`
-    : `¡Sumate a "${g.name}" en Plancito para que podamos hacer más plancitos! Ahí votamos cuándo y qué hacemos, y las cuentas quedan claras 🙌 ${link}`;
+export function inviteText(g: { name: string }, link: string, fromPlan = false) {
+  return fromPlan ? `Che, ¿hacemos un plancito? ${link}` : `Sumate a "${g.name}" para seguir haciendo plancitos: ${link}`;
 }
